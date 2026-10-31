@@ -59,10 +59,32 @@
 
     .header-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
       margin-bottom: 16px;
+    }
+
+    .title-block {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(244, 220, 154, 0.12);
+      border: 1px solid rgba(244, 220, 154, 0.24);
+      color: var(--gold-strong);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .eyebrow {
@@ -585,9 +607,50 @@
     }
 
     @media (max-width: 760px) {
+      .topbar {
+        padding: 16px 14px 14px;
+      }
+
       .header-row {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+      }
+
+      .title-block {
+        width: 100%;
+      }
+
+      .stat-pill {
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .view-switch,
+      .filter-wrap {
+        width: 100%;
+      }
+
+      .view-switch {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filter-wrap {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .mode-btn,
+      .filter-btn {
+        flex: 1 1 auto;
+        width: 100%;
       }
 
       .completion-summary {
@@ -624,7 +687,8 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="header-row">
-        <div>
+        <div class="title-block">
+          <div class="version-badge" id="appVersion">v1.0.1</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
@@ -1276,6 +1340,7 @@
 
   <script>
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
+    const APP_VERSION = 'v1.0.1';
     let allChecks = [];
     let storyChecks = [];
     const trailerButtons = Array.from(document.querySelectorAll('.trailer-btn'));
@@ -1287,6 +1352,7 @@
     const expandedView = document.getElementById('expandedView');
     const progressFill = document.getElementById('progressFill');
     const completionText = document.getElementById('completionText');
+    const appVersion = document.getElementById('appVersion');
     const nextStepEl = document.getElementById('nextStep');
     const expandedSyncMap = {
       'arr-base': ['ARR · Seventh Umbral Era'],
@@ -1931,7 +1997,9 @@
         }
 
         group.classList.toggle('group-complete', complete);
-        group.open = !complete;
+        if (complete) {
+          group.open = false;
+        }
       });
     }
 
@@ -2019,6 +2087,7 @@
 
       progressFill.style.width = percent + '%';
       completionText.textContent = `${complete} / ${total} Complete`;
+      if (appVersion) appVersion.textContent = APP_VERSION;
     }
 
     function updateUnlocks() {
