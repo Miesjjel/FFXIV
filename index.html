@@ -31,6 +31,7 @@
     body {
       margin: 0;
       min-height: 100vh;
+      overflow-x: hidden;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background:
         radial-gradient(circle at top, rgba(120, 132, 255, 0.18), transparent 30%),
@@ -39,9 +40,10 @@
     }
 
     .app-shell {
+      width: min(100%, 1200px);
       max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 20px 48px;
+      padding: 20px 12px 48px;
     }
 
     .topbar {
@@ -51,8 +53,7 @@
       padding: 22px 22px 18px;
       box-shadow: 0 16px 36px var(--shadow);
       backdrop-filter: blur(10px);
-      position: static;
-      top: auto;
+      position: relative;
       z-index: 1;
     }
 
@@ -293,22 +294,33 @@
       font-size: 0.9rem;
     }
 
-    .progress-wrap {
+    .top-progress {
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 40;
+      width: min(100%, 1200px);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 10px 12px 0;
+      background: rgba(11, 16, 32, 0.92);
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-wrap {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 6px 0 0;
-      background: rgba(21, 29, 46, 0.78);
-      backdrop-filter: blur(6px);
+      background: rgba(21, 29, 46, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 26px rgba(2, 6, 23, 0.38);
     }
 
     .progress-bar {
       position: relative;
       width: 100%;
-      height: 12px;
+      height: 10px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(244, 220, 154, 0.16);
       border-radius: 999px;
@@ -565,6 +577,14 @@
   </style>
 </head>
 <body>
+  <div class="top-progress">
+    <div class="progress-wrap" aria-label="Story completion progress">
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-shell">
     <header class="topbar">
       <div class="header-row">
@@ -575,12 +595,6 @@
         <div class="stat-pill">
           <strong id="completionText">0 / 64 Complete</strong>
           <small>Story progress</small>
-        </div>
-      </div>
-
-      <div class="progress-wrap" aria-label="Story completion progress">
-        <div class="progress-bar" aria-hidden="true">
-          <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
 
