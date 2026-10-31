@@ -730,7 +730,7 @@
     <header class="topbar">
       <div class="header-row">
         <div class="title-block">
-          <div class="version-badge" id="appVersion">v1.0.1</div>
+          <div class="version-badge" id="appVersion">v1.0.0</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
@@ -1381,8 +1381,37 @@
   </div>
 
   <script>
+    /*
+     * FFXIV Story & Trailer Tracker
+     *
+     * Purpose:
+     *   This single-page tracker helps players follow the Final Fantasy XIV story flow,
+     *   keep track of which quests, patches, and expansion chapters are complete, and
+     *   remember whether each cinematic trailer has been watched.
+     *
+     * What it does:
+     *   - tracks compact story progress across the main game timeline
+     *   - supports expanded MSQ questbook viewing with per-group breakdowns
+     *   - syncs progress between compact and expanded modes
+     *   - links to official trailers for each expansion/patch group
+     *   - stores progress in localStorage so it persists in the browser
+     *
+     * Versioning strategy:
+     *   - Start at v1.0.0 and increase the patch number with every meaningful change.
+     *   - Major releases change the first number, minor releases the second, and patch updates
+     *     the third when making small bug fixes or improvements.
+     *   - Example: v1.0.0 -> v1.0.1 -> v1.0.2
+     *
+     * Version history:
+     *   v1.0.0 - Initial tracker release with documented script structure and release notes.
+     *   v1.0.1 - Expanded trailer-watched checkboxes and grouped completion logic.
+     */
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
-    const APP_VERSION = 'v1.0.1';
+    const VERSION_HISTORY = [
+      { version: 'v1.0.0', notes: 'Initial tracker release with scripted structure, comments, and release versioning.' },
+      { version: 'v1.0.1', notes: 'Added expanded trailer-watched checkboxes and group completion tracking.' }
+    ];
+    const APP_VERSION = VERSION_HISTORY[0].version;
     let allChecks = [];
     let storyChecks = [];
     const trailerButtons = Array.from(document.querySelectorAll('.trailer-btn'));
@@ -1918,15 +1947,26 @@
       { title: 'Stormblood', group: 'SB · Stormblood · Levels 68-70' }
     ];
 
+    /**
+     * Creates a stable DOM selector ID for each expanded MSQ row.
+     * This keeps checkbox state predictable across re-renders.
+     */
     function makeExpandedQuestId(item) {
       const base = `${item.group} ${item.title}`.toLowerCase();
       return base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
 
+    /**
+     * Creates a unique ID for the trailer-watched checkbox on each group.
+     */
     function makeExpandedTrailerId(groupName) {
       return `expanded-trailer-${groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
     }
 
+    /**
+     * Maps compact tracker IDs back to the matching expanded quest IDs.
+     * This keeps the compact and expanded views synchronized.
+     */
     function getExpandedIdsForCompactId(compactId) {
       const prefixes = expandedSyncMap[compactId] || [];
       if (!prefixes.length) return [];
@@ -1936,10 +1976,18 @@
         .map((item) => makeExpandedQuestId(item));
     }
 
+    /**
+     * Mirrors a compact checkbox change to the matching expanded quest rows.
+     * This avoids duplicated logic and keeps both views consistent.
+     */
     function syncExpandedFromCompact(compactId, checked) {
       const ids = getExpandedIdsForCompactId(compactId);
+      const expandedCheckMap = new Map(
+        Array.from(document.querySelectorAll('.expanded-check')).map((input) => [input.dataset.id, input])
+      );
+
       ids.forEach((id) => {
-        const input = document.querySelector(`.expanded-check[data-id="${id}"]`);
+        const input = expandedCheckMap.get(id);
         if (input && input.checked !== checked) {
           input.checked = checked;
           input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1947,6 +1995,9 @@
       });
     }
 
+    /**
+     * Returns the relevant YouTube trailer target for an expansion or patch group.
+     */
     function getExpandedGroupTrailer(groupName) {
       if (!groupName) return null;
 
@@ -2004,17 +2055,29 @@
       return null;
     }
 
+    /**
+     * Checks whether every quest in a specific group is complete.
+     * This drives the green completion badge and auto-collapse behavior.
+     */
     function isExpandedGroupComplete(groupName) {
       const items = expandedQuestBook.filter((item) => item.group === groupName);
       if (!items.length) return false;
 
+      const checkboxMap = new Map(
+        Array.from(document.querySelectorAll('.expanded-check')).map((input) => [input.dataset.id, input])
+      );
+
       return items.every((item) => {
         const id = makeExpandedQuestId(item);
-        const checkbox = document.querySelector(`.expanded-check[data-id="${id}"]`);
+        const checkbox = checkboxMap.get(id);
         return Boolean(checkbox && checkbox.checked);
       });
     }
 
+    /**
+     * Updates the summary badge for each expanded group.
+     * If all quests in a section are checked, it marks the section complete and collapses it.
+     */
     function updateExpandedGroupStatus() {
       document.querySelectorAll('#expandedView .expanded-group').forEach((group) => {
         const summary = group.querySelector('summary');
@@ -2041,6 +2104,10 @@
       });
     }
 
+    /**
+     * Builds the expanded questbook UI from the grouped data set.
+     * This function creates each group, trailer row, and quest row in one pass.
+     */
     function renderExpandedQuestBook() {
       const listEl = document.getElementById('expandedQuestBook');
       if (!listEl) return;
@@ -2129,20 +2196,29 @@
       updateExpandedGroupStatus();
     }
 
+    /**
+     * Returns the matching compact prerequisite checkbox for the given data ID.
+     */
     function getPrereqItem(prereqId) {
       return prereqId ? document.querySelector(`input.story-check[data-id="${prereqId}"]`) : null;
     }
 
+    /**
+     * Calculates the overall completion percentage and updates the progress bar label.
+     */
     function updateProgress() {
       const total = allChecks.length;
       const complete = allChecks.filter((item) => item.checked).length;
-      const percent = Math.round((complete / total) * 100);
+      const percent = total ? Math.round((complete / total) * 100) : 0;
 
-      progressFill.style.width = percent + '%';
+      progressFill.style.width = `${percent}%`;
       completionText.textContent = `${complete} / ${total} Complete`;
       if (appVersion) appVersion.textContent = APP_VERSION;
     }
 
+    /**
+     * Reveals and enables prerequisite-dependent UI elements after story progress advances.
+     */
     function updateUnlocks() {
       trailerButtons.forEach((button) => {
         button.classList.add('visible');
@@ -2245,13 +2321,16 @@
       storyChecks = Array.from(document.querySelectorAll('.story-check'));
     }
 
+    /**
+     * Persists the current form state so the tracker survives page reloads.
+     */
     function saveState() {
-      const state = {};
-      allChecks.forEach((item) => {
-        if (item.dataset && item.dataset.id) {
-          state[item.dataset.id] = item.checked;
-        }
-      });
+      const state = Object.fromEntries(
+        allChecks
+          .filter((item) => item.dataset && item.dataset.id)
+          .map((item) => [item.dataset.id, item.checked])
+      );
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       updateProgress();
       updateUnlocks();
@@ -2260,6 +2339,9 @@
       applyFilters();
     }
 
+    /**
+     * Restores any stored checkbox state from localStorage when the page loads.
+     */
     function loadState() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
