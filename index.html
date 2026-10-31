@@ -282,6 +282,32 @@
       gap: 12px;
     }
 
+    .group-trailer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 6px 10px 2px;
+    }
+
+    .group-trailer-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-left: auto;
+    }
+
+    .group-trailer-check input[type="checkbox"] {
+      accent-color: var(--success);
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
+
     .expanded-group-list {
       list-style: none;
       margin: 0;
@@ -1897,6 +1923,10 @@
       return base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
 
+    function makeExpandedTrailerId(groupName) {
+      return `expanded-trailer-${groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+    }
+
     function getExpandedIdsForCompactId(compactId) {
       const prefixes = expandedSyncMap[compactId] || [];
       if (!prefixes.length) return [];
@@ -2046,6 +2076,9 @@
         inner.className = 'expanded-group-inner';
 
         const trailer = getExpandedGroupTrailer(groupName);
+        const trailerRow = document.createElement('div');
+        trailerRow.className = 'group-trailer-row';
+
         if (trailer) {
           const trailerLink = document.createElement('a');
           trailerLink.className = 'trailer-btn visible';
@@ -2053,8 +2086,18 @@
           trailerLink.target = '_blank';
           trailerLink.rel = 'noreferrer';
           trailerLink.textContent = trailer.label;
-          inner.appendChild(trailerLink);
+          trailerRow.appendChild(trailerLink);
         }
+
+        const trailerCheckLabel = document.createElement('label');
+        trailerCheckLabel.className = 'group-trailer-check';
+        const trailerCheckId = makeExpandedTrailerId(groupName);
+        trailerCheckLabel.innerHTML = `
+          <input class="expanded-trailer-check" type="checkbox" data-id="${trailerCheckId}" />
+          <span>Trailer gekeken</span>
+        `;
+        trailerRow.appendChild(trailerCheckLabel);
+        inner.appendChild(trailerRow);
 
         const list = document.createElement('ul');
         list.className = 'expanded-group-list';
