@@ -187,6 +187,42 @@
       background: rgba(111, 126, 247, 0.06);
     }
 
+    .group-title-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .group-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .group-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: transparent;
+      font-size: 0.8rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .group-status.complete {
+      background: rgba(134, 239, 172, 0.14);
+      border-color: rgba(134, 239, 172, 0.5);
+      color: var(--success);
+      box-shadow: 0 0 12px rgba(134, 239, 172, 0.2);
+    }
+
     .expanded-group summary::-webkit-details-marker {
       display: none;
     }
@@ -1856,6 +1892,48 @@
       return null;
     }
 
+    function isExpandedGroupComplete(groupName) {
+      const items = expandedQuestBook.filter((item) => item.group === groupName);
+      if (!items.length) return false;
+
+      return items.every((item) => {
+        const id = makeExpandedQuestId(item);
+        const checkbox = document.querySelector(`.expanded-check[data-id="${id}"]`);
+        return Boolean(checkbox && checkbox.checked);
+      });
+    }
+
+    function updateExpandedGroupStatus() {
+      document.querySelectorAll('#expandedView .expanded-group').forEach((group) => {
+        const summary = group.querySelector('summary');
+        if (!summary) return;
+
+        const groupName = group.dataset.groupName || '';
+        const complete = isExpandedGroupComplete(groupName);
+        const titleWrap = summary.querySelector('.group-title-wrap');
+        const status = summary.querySelector('.group-status');
+
+        if (titleWrap) {
+          titleWrap.innerHTML = `
+            <span class="group-label">${groupName}</span>
+            <span class="group-status ${complete ? 'complete' : ''}" title="${complete ? 'All quests complete' : 'Progress in this group'}">${complete ? '✓' : ''}</span>
+          `;
+        }
+
+        if (!titleWrap) {
+          summary.innerHTML = `
+            <span class="group-title-wrap">
+              <span class="group-label">${groupName}</span>
+              <span class="group-status ${complete ? 'complete' : ''}" title="${complete ? 'All quests complete' : 'Progress in this group'}">${complete ? '✓' : ''}</span>
+            </span>
+            <span>${group.dataset.count || 0}</span>
+          `;
+        }
+
+        group.classList.toggle('group-complete', complete);
+      });
+    }
+
     function renderExpandedQuestBook() {
       const listEl = document.getElementById('expandedQuestBook');
       if (!listEl) return;
@@ -1872,10 +1950,18 @@
       Array.from(grouped.entries()).forEach(([groupName, items]) => {
         const group = document.createElement('details');
         group.className = 'expanded-group';
+        group.dataset.groupName = groupName;
+        group.dataset.count = String(items.length);
         group.open = true;
 
         const summary = document.createElement('summary');
-        summary.innerHTML = `<span>${groupName}</span><span>${items.length}</span>`;
+        summary.innerHTML = `
+          <span class="group-title-wrap">
+            <span class="group-label">${groupName}</span>
+            <span class="group-status" title="Progress in this group"></span>
+          </span>
+          <span>${items.length}</span>
+        `;
 
         const inner = document.createElement('div');
         inner.className = 'expanded-group-inner';
@@ -1917,6 +2003,8 @@
         group.appendChild(inner);
         listEl.appendChild(group);
       });
+
+      updateExpandedGroupStatus();
     }
 
     function getPrereqItem(prereqId) {
@@ -2045,6 +2133,7 @@
       updateProgress();
       updateUnlocks();
       updateNextStep();
+      updateExpandedGroupStatus();
       applyFilters();
     }
 
@@ -2101,6 +2190,7 @@
     updateProgress();
     updateUnlocks();
     updateNextStep();
+    updateExpandedGroupStatus();
     applyFilters();
   </script>
 </body>
