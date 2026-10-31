@@ -214,12 +214,28 @@
       align-items: center;
       gap: 10px;
       min-width: 0;
+      flex: 1 1 auto;
     }
 
     .group-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .summary-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .group-count {
+      font-weight: 700;
+      color: var(--gold-strong);
+      min-width: 1.5em;
+      text-align: right;
     }
 
     .group-status {
@@ -1976,25 +1992,17 @@
 
         const groupName = group.dataset.groupName || '';
         const complete = isExpandedGroupComplete(groupName);
-        const titleWrap = summary.querySelector('.group-title-wrap');
-        const status = summary.querySelector('.group-status');
+        const count = group.dataset.count || '0';
 
-        if (titleWrap) {
-          titleWrap.innerHTML = `
+        summary.innerHTML = `
+          <span class="group-title-wrap">
             <span class="group-label">${groupName}</span>
+          </span>
+          <span class="summary-meta">
+            <span class="group-count">${count}</span>
             <span class="group-status ${complete ? 'complete' : ''}" title="${complete ? 'All quests complete' : 'Progress in this group'}">${complete ? '✓' : ''}</span>
-          `;
-        }
-
-        if (!titleWrap) {
-          summary.innerHTML = `
-            <span class="group-title-wrap">
-              <span class="group-label">${groupName}</span>
-              <span class="group-status ${complete ? 'complete' : ''}" title="${complete ? 'All quests complete' : 'Progress in this group'}">${complete ? '✓' : ''}</span>
-            </span>
-            <span>${group.dataset.count || 0}</span>
-          `;
-        }
+          </span>
+        `;
 
         group.classList.toggle('group-complete', complete);
         if (complete) {
@@ -2027,9 +2035,11 @@
         summary.innerHTML = `
           <span class="group-title-wrap">
             <span class="group-label">${groupName}</span>
+          </span>
+          <span class="summary-meta">
+            <span class="group-count">${items.length}</span>
             <span class="group-status" title="Progress in this group"></span>
           </span>
-          <span>${items.length}</span>
         `;
 
         const inner = document.createElement('div');
