@@ -20,6 +20,7 @@
  * Version history:
  *   v1.0.0 - Initial tracker release.
  *   v1.0.1 - Added expanded trailer checkbox, group completion marker, and overview comments.
+ *   v1.0.2 - Persisted the selected mode, removed redundant filter buttons, and smoothed group auto-collapse behaviour.
  */
 
 /*
@@ -48,18 +49,20 @@
      *   v1.0.1 - Expanded trailer-watched checkboxes and grouped completion logic.
      */
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
+    const MODE_KEY = 'ffxiv-story-tracker-mode';
     const VERSION_HISTORY = [
       { version: 'v1.0.0', notes: 'Initial tracker release with scripted structure, comments, and release versioning.' },
-      { version: 'v1.0.1', notes: 'Added expanded trailer-watched checkboxes and group completion tracking.' }
+      { version: 'v1.0.1', notes: 'Added expanded trailer-watched checkboxes and group completion tracking.' },
+      { version: 'v1.0.2', notes: 'Persisted selected view mode, removed unnecessary filter buttons, and smoothed expanded group auto-collapse behaviour.' }
     ];
-    const APP_VERSION = VERSION_HISTORY[0].version;
+    const APP_VERSION = VERSION_HISTORY[VERSION_HISTORY.length - 1].version;
     let allChecks = [];
     let storyChecks = [];
+    let currentMode = 'compact';
     const trailerButtons = Array.from(document.querySelectorAll('.trailer-btn'));
     const cinematicRows = Array.from(document.querySelectorAll('.cinematic-row'));
     const modeButtons = Array.from(document.querySelectorAll('.mode-btn'));
     const compactFilterButtons = Array.from(document.querySelectorAll('.compact-filters .filter-btn'));
-    const expandedFilterButtons = Array.from(document.querySelectorAll('.expanded-filters .filter-btn'));
     const compactView = document.getElementById('compactView');
     const expandedView = document.getElementById('expandedView');
     const progressFill = document.getElementById('progressFill');
@@ -727,6 +730,7 @@
         const groupName = group.dataset.groupName || '';
         const complete = isExpandedGroupComplete(groupName);
         const count = group.dataset.count || '0';
+        const previousState = group.dataset.complete === 'true';
 
         summary.innerHTML = `
           <span class="group-title-wrap">
@@ -738,8 +742,10 @@
           </span>
         `;
 
+        group.dataset.complete = String(complete);
         group.classList.toggle('group-complete', complete);
-        if (complete) {
+
+        if (complete && !previousState) {
           group.open = false;
         }
       });
@@ -923,27 +929,13 @@
       });
     }
 
-    function applyExpandedFilters() {
-      const active = document.querySelector('.expanded-filters .filter-btn.active')?.dataset.filter || 'all';
-      const groups = Array.from(document.querySelectorAll('#expandedView .expanded-group'));
-
-      groups.forEach((group) => {
-        const rows = Array.from(group.querySelectorAll('.expanded-row'));
-        const matches = rows.filter((row) => active === 'all' || row.classList.contains('must'));
-        group.classList.toggle('is-hidden', matches.length === 0);
-        rows.forEach((row) => {
-          row.classList.toggle('is-hidden', active !== 'all' && !row.classList.contains('must'));
-        });
-      });
-    }
-
     function applyFilters() {
       applyCompactFilters();
-      applyExpandedFilters();
     }
 
     function setMode(mode) {
       const compact = mode === 'compact';
+      currentMode = mode;
       compactView.classList.toggle('is-hidden', !compact);
       expandedView.classList.toggle('is-hidden', compact);
 
@@ -952,8 +944,7 @@
       });
 
       document.querySelector('.compact-filters').classList.toggle('is-hidden', !compact);
-      document.querySelector('.expanded-filters').classList.toggle('is-hidden', compact);
-
+      localStorage.setItem(MODE_KEY, mode);
       applyFilters();
     }
 
@@ -972,7 +963,13 @@
           .map((item) => [item.dataset.id, item.checked])
       );
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          mode: currentMode,
+          checks: state
+        })
+      );
       updateProgress();
       updateUnlocks();
       updateNextStep();
@@ -985,17 +982,31 @@
      */
     function loadState() {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) {
+        const rememberedMode = localStorage.getItem(MODE_KEY) || 'compact';
+        setMode(rememberedMode);
+        return;
+      }
 
       try {
         const saved = JSON.parse(raw);
+        const checks = saved && typeof saved === 'object' && Object.prototype.hasOwnProperty.call(saved, 'checks')
+          ? saved.checks
+          : saved;
+        const rememberedMode = saved && typeof saved === 'object' && saved.mode
+          ? saved.mode
+          : localStorage.getItem(MODE_KEY) || 'compact';
+
         allChecks.forEach((item) => {
-          if (item.dataset && item.dataset.id && Object.prototype.hasOwnProperty.call(saved, item.dataset.id)) {
-            item.checked = Boolean(saved[item.dataset.id]);
+          if (item.dataset && item.dataset.id && Object.prototype.hasOwnProperty.call(checks, item.dataset.id)) {
+            item.checked = Boolean(checks[item.dataset.id]);
           }
         });
+
+        setMode(rememberedMode);
       } catch (error) {
         console.warn('Failed to parse saved tracker state:', error);
+        setMode(localStorage.getItem(MODE_KEY) || 'compact');
       }
     }
 
@@ -1007,13 +1018,6 @@
       button.addEventListener('click', () => {
         compactFilterButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
         applyCompactFilters();
-      });
-    });
-
-    expandedFilterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        expandedFilterButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
-        applyExpandedFilters();
       });
     });
 
@@ -1032,7 +1036,7 @@
     loadState();
     reorderCinematicRows();
     normalizeCinematicLabels();
-    setMode('compact');
+    setMode(currentMode || 'compact');
     updateProgress();
     updateUnlocks();
     updateNextStep();

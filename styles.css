@@ -187,6 +187,11 @@
       border-radius: 14px;
       background: rgba(255, 255, 255, 0.02);
       overflow: hidden;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .expanded-group[open] {
+      box-shadow: 0 8px 18px rgba(2, 6, 23, 0.14);
     }
 
     .expanded-group summary {
@@ -273,6 +278,14 @@
       padding: 12px;
       display: grid;
       gap: 12px;
+      overflow: hidden;
+      transition: padding 0.2s ease, opacity 0.18s ease;
+    }
+
+    .expanded-group:not([open]) .expanded-group-inner {
+      opacity: 0.72;
+      padding-top: 0;
+      padding-bottom: 0;
     }
 
     .group-trailer-row {
