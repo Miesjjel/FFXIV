@@ -719,6 +719,27 @@
     }
 
     /**
+     * Mirrors an expanded-group completion result back to the matching compact story milestone.
+     * This keeps the compact progress tracker and the "next recommended step" logic in sync.
+     */
+    function syncCompactFromExpanded(groupName) {
+      const compactIds = Object.entries(expandedSyncMap)
+        .filter(([, groups]) => groups.includes(groupName))
+        .map(([compactId]) => compactId);
+
+      if (!compactIds.length) return;
+
+      const complete = isExpandedGroupComplete(groupName);
+      compactIds.forEach((compactId) => {
+        const input = document.querySelector(`.story-check[data-id="${compactId}"]`);
+        if (!input || input.checked === complete) return;
+
+        input.checked = complete;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    /**
      * Updates the summary badge for each expanded group.
      * If all quests in a section are checked, it marks the section complete and collapses it.
      */
@@ -746,7 +767,15 @@
         group.classList.toggle('group-complete', complete);
 
         if (complete && !previousState) {
+          const activeEl = document.activeElement;
+          const previousScrollY = Number(group.dataset.scrollSnapshot || window.scrollY);
+          if (activeEl instanceof HTMLElement) {
+            activeEl.blur();
+          }
           group.open = false;
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: previousScrollY, left: 0, behavior: 'auto' });
+          });
         }
       });
     }
@@ -1025,10 +1054,27 @@
     refreshCheckRefs();
 
     allChecks.forEach((item) => {
+      item.addEventListener('pointerdown', () => {
+        if (item.classList.contains('expanded-check')) {
+          const group = item.closest('.expanded-group');
+          if (group) {
+            group.dataset.scrollSnapshot = String(window.scrollY);
+          }
+        }
+      });
+
       item.addEventListener('change', () => {
         if (item.classList.contains('story-check')) {
           syncExpandedFromCompact(item.dataset.id, item.checked);
         }
+
+        if (item.classList.contains('expanded-check')) {
+          const group = item.closest('.expanded-group');
+          if (group) {
+            syncCompactFromExpanded(group.dataset.groupName || '');
+          }
+        }
+
         saveState();
       });
     });
