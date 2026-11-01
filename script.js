@@ -2,13 +2,12 @@
  * FFXIV Story & Trailer Tracker
  *
  * Purpose:
- *   This app tracks the chronological story flow of Final Fantasy XIV,
- *   keeps track of completed quests and patch milestones, and reminds the
- *   player which cinematics or trailers still need to be watched.
+ *   This app tracks the chronological main-story flow of Final Fantasy XIV,
+ *   keeps track of completed MSQ chapters, and reminds the player which
+ *   cinematics or trailers still need to be watched.
  *
  * What it does:
- *   - tracks the main story progress in both compact and expanded views
- *   - syncs progress between the compact tracker and the detailed questbook
+ *   - tracks the expanded MSQ questbook by chapter and patch
  *   - shows trailer links per expansion or patch group
  *   - stores progress in localStorage so it persists between reloads
  *
@@ -19,90 +18,30 @@
  *
  * Version history:
  *   v1.0.0 - Initial tracker release.
- *   v1.0.1 - Added expanded trailer checkbox, group completion marker, and overview comments.
- *   v1.0.2 - Persisted the selected mode, removed redundant filter buttons, and smoothed group auto-collapse behaviour.
+ *   v1.0.1 - Added expanded trailer checkboxes and group completion tracking.
+ *   v1.0.2 - Persisted selected view state and smoothed expanded-group behaviour.
+ *   v1.0.3 - Recalculated the next step from the expanded questbook.
+ *   v1.0.4 - Locked the tracker to the expanded questbook as the single source of truth.
  */
-
-/*
-     * FFXIV Story & Trailer Tracker
-     *
-     * Purpose:
-     *   This single-page tracker helps players follow the Final Fantasy XIV story flow,
-     *   keep track of which quests, patches, and expansion chapters are complete, and
-     *   remember whether each cinematic trailer has been watched.
-     *
-     * What it does:
-     *   - tracks compact story progress across the main game timeline
-     *   - supports expanded MSQ questbook viewing with per-group breakdowns
-     *   - syncs progress between compact and expanded modes
-     *   - links to official trailers for each expansion/patch group
-     *   - stores progress in localStorage so it persists in the browser
-     *
-     * Versioning strategy:
-     *   - Start at v1.0.0 and increase the patch number with every meaningful change.
-     *   - Major releases change the first number, minor releases the second, and patch updates
-     *     the third when making small bug fixes or improvements.
-     *   - Example: v1.0.0 -> v1.0.1 -> v1.0.2
-     *
-     * Version history:
-     *   v1.0.0 - Initial tracker release with documented script structure and release notes.
-     *   v1.0.1 - Expanded trailer-watched checkboxes and grouped completion logic.
-     */
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
-    const MODE_KEY = 'ffxiv-story-tracker-mode';
     const VERSION_HISTORY = [
       { version: 'v1.0.0', notes: 'Initial tracker release with scripted structure, comments, and release versioning.' },
       { version: 'v1.0.1', notes: 'Added expanded trailer-watched checkboxes and group completion tracking.' },
-      { version: 'v1.0.2', notes: 'Persisted selected view mode, removed unnecessary filter buttons, and smoothed expanded group auto-collapse behaviour.' }
+      { version: 'v1.0.2', notes: 'Persisted selected view mode, removed unnecessary filter buttons, and smoothed expanded group auto-collapse behaviour.' },
+      { version: 'v1.0.3', notes: 'Recalculated the next recommended step strictly from the expanded questbook.' },
+      { version: 'v1.0.4', notes: 'Locked the tracker to the expanded questbook as the single source of truth.' }
     ];
     const APP_VERSION = VERSION_HISTORY[VERSION_HISTORY.length - 1].version;
     let allChecks = [];
     let storyChecks = [];
-    let currentMode = 'compact';
+    let currentMode = 'expanded';
     const trailerButtons = Array.from(document.querySelectorAll('.trailer-btn'));
     const cinematicRows = Array.from(document.querySelectorAll('.cinematic-row'));
-    const modeButtons = Array.from(document.querySelectorAll('.mode-btn'));
-    const compactFilterButtons = Array.from(document.querySelectorAll('.compact-filters .filter-btn'));
-    const compactView = document.getElementById('compactView');
     const expandedView = document.getElementById('expandedView');
     const progressFill = document.getElementById('progressFill');
     const completionText = document.getElementById('completionText');
     const appVersion = document.getElementById('appVersion');
     const nextStepEl = document.getElementById('nextStep');
-    const expandedSyncMap = {
-      'arr-base': ['ARR · Seventh Umbral Era'],
-      'arr-2-1': ['ARR · Seventh Astral Era · Patch 2.1'],
-      'arr-2-2': ['ARR · Seventh Astral Era · Patch 2.2'],
-      'arr-2-3': ['ARR · Seventh Astral Era · Patch 2.3'],
-      'arr-2-4': ['ARR · Seventh Astral Era · Patch 2.4'],
-      'arr-2-5': ['ARR · Seventh Astral Era · Patch 2.5', 'ARR · Seventh Astral Era · Patch 2.55'],
-      'hw-base': ['HW · Heavensward · Levels 50-51', 'HW · Heavensward · Levels 52-53', 'HW · Heavensward · Levels 54-55', 'HW · Heavensward · Levels 56-57', 'HW · Heavensward · Levels 58-60'],
-      'hw-3-1': ['HW · Post-Heavensward · Patch 3.1'],
-      'hw-3-2': ['HW · Post-Heavensward · Patch 3.2'],
-      'hw-3-3': ['HW · Post-Heavensward · Patch 3.3'],
-      'hw-3-4': ['HW · Post-Heavensward · Patch 3.4'],
-      'hw-3-5': ['HW · Post-Heavensward · Patch 3.5', 'HW · Post-Heavensward · Patch 3.56'],
-      'sb-base': ['SB · Stormblood · Levels 60-61', 'SB · Stormblood · Levels 62-63', 'SB · Stormblood · Levels 64-65', 'SB · Stormblood · Levels 66-67', 'SB · Stormblood · Levels 68-70'],
-      'sb-4-1': ['SB · Stormblood'],
-      'sb-4-2': ['SB · Stormblood'],
-      'sb-4-3': ['SB · Stormblood'],
-      'sb-4-4': ['SB · Stormblood'],
-      'sb-4-5': ['SB · Stormblood'],
-      'shb-base': ['ShB · Shadowbringers'],
-      'shb-5-1': ['ShB · Shadowbringers'],
-      'shb-5-2': ['ShB · Shadowbringers'],
-      'shb-5-3': ['ShB · Shadowbringers'],
-      'shb-5-4': ['ShB · Shadowbringers'],
-      'shb-5-5': ['ShB · Shadowbringers'],
-      'ew-base': ['EW · Endwalker'],
-      'ew-6-1': ['EW · Endwalker'],
-      'ew-6-2': ['EW · Endwalker'],
-      'ew-6-3': ['EW · Endwalker'],
-      'ew-6-4': ['EW · Endwalker'],
-      'ew-6-5': ['EW · Endwalker'],
-      'dt-base': ['DT · Dawntrail'],
-      'dt-7-1': ['DT · Dawntrail']
-    };
     const expandedQuestBook = [
       { title: 'Close to Home', group: 'ARR · Seventh Umbral Era · Levels 1-15' },
       { title: 'To the Bannock', group: 'ARR · Seventh Umbral Era · Levels 1-15' },
@@ -608,38 +547,6 @@
     }
 
     /**
-     * Maps compact tracker IDs back to the matching expanded quest IDs.
-     * This keeps the compact and expanded views synchronized.
-     */
-    function getExpandedIdsForCompactId(compactId) {
-      const prefixes = expandedSyncMap[compactId] || [];
-      if (!prefixes.length) return [];
-
-      return expandedQuestBook
-        .filter((item) => prefixes.some((prefix) => item.group.startsWith(prefix)))
-        .map((item) => makeExpandedQuestId(item));
-    }
-
-    /**
-     * Mirrors a compact checkbox change to the matching expanded quest rows.
-     * This avoids duplicated logic and keeps both views consistent.
-     */
-    function syncExpandedFromCompact(compactId, checked) {
-      const ids = getExpandedIdsForCompactId(compactId);
-      const expandedCheckMap = new Map(
-        Array.from(document.querySelectorAll('.expanded-check')).map((input) => [input.dataset.id, input])
-      );
-
-      ids.forEach((id) => {
-        const input = expandedCheckMap.get(id);
-        if (input && input.checked !== checked) {
-          input.checked = checked;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
-    }
-
-    /**
      * Returns the relevant YouTube trailer target for an expansion or patch group.
      */
     function getExpandedGroupTrailer(groupName) {
@@ -715,27 +622,6 @@
         const id = makeExpandedQuestId(item);
         const checkbox = checkboxMap.get(id);
         return Boolean(checkbox && checkbox.checked);
-      });
-    }
-
-    /**
-     * Mirrors an expanded-group completion result back to the matching compact story milestone.
-     * This keeps the compact progress tracker and the "next recommended step" logic in sync.
-     */
-    function syncCompactFromExpanded(groupName) {
-      const compactIds = Object.entries(expandedSyncMap)
-        .filter(([, groups]) => groups.includes(groupName))
-        .map(([compactId]) => compactId);
-
-      if (!compactIds.length) return;
-
-      const complete = isExpandedGroupComplete(groupName);
-      compactIds.forEach((compactId) => {
-        const input = document.querySelector(`.story-check[data-id="${compactId}"]`);
-        if (!input || input.checked === complete) return;
-
-        input.checked = complete;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
       });
     }
 
@@ -873,13 +759,6 @@
     }
 
     /**
-     * Returns the matching compact prerequisite checkbox for the given data ID.
-     */
-    function getPrereqItem(prereqId) {
-      return prereqId ? document.querySelector(`input.story-check[data-id="${prereqId}"]`) : null;
-    }
-
-    /**
      * Calculates the overall completion percentage and updates the progress bar label.
      */
     function updateProgress() {
@@ -930,56 +809,30 @@
     }
 
     function updateNextStep() {
-      const next = storyChecks.find((item) => !item.checked);
-      if (!next) {
-        nextStepEl.textContent = 'All story milestones complete — time to revisit the best cutscenes.';
+      const nextExpanded = Array.from(document.querySelectorAll('#expandedView .expanded-check')).find((item) => !item.checked);
+      if (!nextExpanded) {
+        nextStepEl.textContent = 'All expanded quests complete — time to revisit the best cutscenes.';
         return;
       }
 
-      const milestone = next.closest('.milestone');
-      const label = milestone ? milestone.querySelector('.task-text').textContent.trim() : 'Next milestone';
+      const row = nextExpanded.closest('.expanded-row');
+      const label = row ? row.querySelector('.task-text')?.textContent.trim() : 'Next quest';
       nextStepEl.textContent = 'Next recommended step: ' + label;
     }
 
-    function applyCompactFilters() {
-      const active = document.querySelector('.compact-filters .filter-btn.active')?.dataset.filter || 'all';
-      const rows = Array.from(document.querySelectorAll('#compactView .milestone'));
-
-      rows.forEach((row) => {
-        const storyBox = row.querySelector('.story-check');
-        const remaining = storyBox && !storyBox.checked;
-        const hasCinematic = Array.from(row.querySelectorAll('.cinematic-row input')).some((input) => !input.checked);
-
-        let shouldShow = true;
-        if (active === 'remaining') shouldShow = !!remaining;
-        if (active === 'cinema') shouldShow = !!hasCinematic;
-
-        row.classList.toggle('is-hidden', !shouldShow);
-      });
-    }
-
     function applyFilters() {
-      applyCompactFilters();
+      // The expanded questbook is the only supported view.
     }
 
     function setMode(mode) {
-      const compact = mode === 'compact';
-      currentMode = mode;
-      compactView.classList.toggle('is-hidden', !compact);
-      expandedView.classList.toggle('is-hidden', compact);
-
-      modeButtons.forEach((button) => {
-        button.classList.toggle('active', button.dataset.mode === mode);
-      });
-
-      document.querySelector('.compact-filters').classList.toggle('is-hidden', !compact);
-      localStorage.setItem(MODE_KEY, mode);
+      currentMode = 'expanded';
+      if (expandedView) expandedView.classList.remove('is-hidden');
       applyFilters();
     }
 
     function refreshCheckRefs() {
-      allChecks = Array.from(document.querySelectorAll('input[type="checkbox"]'));
-      storyChecks = Array.from(document.querySelectorAll('.story-check'));
+      allChecks = Array.from(document.querySelectorAll('.expanded-check, .expanded-trailer-check'));
+      storyChecks = Array.from(document.querySelectorAll('.expanded-check'));
     }
 
     /**
@@ -1012,8 +865,7 @@
     function loadState() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        const rememberedMode = localStorage.getItem(MODE_KEY) || 'compact';
-        setMode(rememberedMode);
+        setMode('expanded');
         return;
       }
 
@@ -1022,9 +874,6 @@
         const checks = saved && typeof saved === 'object' && Object.prototype.hasOwnProperty.call(saved, 'checks')
           ? saved.checks
           : saved;
-        const rememberedMode = saved && typeof saved === 'object' && saved.mode
-          ? saved.mode
-          : localStorage.getItem(MODE_KEY) || 'compact';
 
         allChecks.forEach((item) => {
           if (item.dataset && item.dataset.id && Object.prototype.hasOwnProperty.call(checks, item.dataset.id)) {
@@ -1032,23 +881,12 @@
           }
         });
 
-        setMode(rememberedMode);
+        setMode('expanded');
       } catch (error) {
         console.warn('Failed to parse saved tracker state:', error);
-        setMode(localStorage.getItem(MODE_KEY) || 'compact');
+        setMode('expanded');
       }
     }
-
-    modeButtons.forEach((button) => {
-      button.addEventListener('click', () => setMode(button.dataset.mode));
-    });
-
-    compactFilterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        compactFilterButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
-        applyCompactFilters();
-      });
-    });
 
     renderExpandedQuestBook();
     refreshCheckRefs();
@@ -1064,14 +902,10 @@
       });
 
       item.addEventListener('change', () => {
-        if (item.classList.contains('story-check')) {
-          syncExpandedFromCompact(item.dataset.id, item.checked);
-        }
-
         if (item.classList.contains('expanded-check')) {
           const group = item.closest('.expanded-group');
           if (group) {
-            syncCompactFromExpanded(group.dataset.groupName || '');
+            group.dataset.scrollSnapshot = String(window.scrollY);
           }
         }
 
@@ -1082,7 +916,7 @@
     loadState();
     reorderCinematicRows();
     normalizeCinematicLabels();
-    setMode(currentMode || 'compact');
+    setMode(currentMode || 'expanded');
     updateProgress();
     updateUnlocks();
     updateNextStep();
