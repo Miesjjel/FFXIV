@@ -22,6 +22,8 @@
  *   v1.0.2 - Persisted selected view state and smoothed expanded-group behaviour.
  *   v1.0.3 - Recalculated the next step from the expanded questbook.
  *   v1.0.4 - Locked the tracker to the expanded questbook as the single source of truth.
+ *   v1.0.5 - Showed completed and total quests for each expanded group.
+ *   v1.0.6 - Added complete MSQ coverage through Dawntrail patch 7.56 and group completion controls.
  */
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
     const VERSION_HISTORY = [
@@ -29,7 +31,9 @@
       { version: 'v1.0.1', notes: 'Added expanded trailer-watched checkboxes and group completion tracking.' },
       { version: 'v1.0.2', notes: 'Persisted selected view mode, removed unnecessary filter buttons, and smoothed expanded group auto-collapse behaviour.' },
       { version: 'v1.0.3', notes: 'Recalculated the next recommended step strictly from the expanded questbook.' },
-      { version: 'v1.0.4', notes: 'Locked the tracker to the expanded questbook as the single source of truth.' }
+      { version: 'v1.0.4', notes: 'Locked the tracker to the expanded questbook as the single source of truth.' },
+      { version: 'v1.0.5', notes: 'Showed completed and total quests for each expanded group.' },
+      { version: 'v1.0.6', notes: 'Added complete MSQ coverage through Dawntrail patch 7.56 and group completion controls.' }
     ];
     const APP_VERSION = VERSION_HISTORY[VERSION_HISTORY.length - 1].version;
     let allChecks = [];
@@ -527,7 +531,502 @@
       { title: 'The Resonant', group: 'SB · Stormblood · Levels 68-70' },
       { title: 'The Legacy of Our Fathers', group: 'SB · Stormblood · Levels 68-70' },
       { title: 'The Measure of His Reach', group: 'SB · Stormblood · Levels 68-70' },
-      { title: 'Stormblood', group: 'SB · Stormblood · Levels 68-70' }
+      { title: 'Stormblood', group: 'SB · Stormblood · Levels 68-70' },
+      { title: "Arenvald\u0027s Adventure", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "The Darkness Below", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "The Mad King\u0027s Trove", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "The Butcher\u0027s Blood", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "Echoes of an Echo", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "A Sultana\u0027s Strings", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "A Sultana\u0027s Duty", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "A Sultana\u0027s Resolve", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "Securing the Saltery", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "A Blissful Arrival", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "Return of the Bull", group: "SB · Post-Stormblood · Patch 4.1" },
+      { title: "Tidings from the East", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "The Sword in the Store", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "Hope on the Waves", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "Elation and Trepidation", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "Storm on the Horizon", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "His Forgotten Home", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "A Guilty Conscience", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "Rise of a New Sun", group: "SB · Post-Stormblood · Patch 4.2" },
+      { title: "Gosetsu and Tsuyu", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Gone Like the Morning Dew", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Fruits of Her Labor", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Conscripts and Contingencies", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "The Primary Agreement", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Under the Moonlight", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Emissary of the Dawn", group: "SB · Post-Stormblood · Patch 4.3" },
+      { title: "Sisterly Act", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "Feel the Burn", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "Shadows in the Empire", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "A Power in Slumber", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "The Will of the Moon", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "The Call", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "Prelude in Violet", group: "SB · Post-Stormblood · Patch 4.4" },
+      { title: "Soul Searching", group: "SB · Post-Stormblood · Patch 4.5" },
+      { title: "A Defector\u0027s Tidings", group: "SB · Post-Stormblood · Patch 4.5" },
+      { title: "Seiryu\u0027s Wall", group: "SB · Post-Stormblood · Patch 4.5" },
+      { title: "Parley on the Front Lines", group: "SB · Post-Stormblood · Patch 4.5" },
+      { title: "The Face of War", group: "SB · Post-Stormblood · Patch 4.5" },
+      { title: "A Brief Reprieve", group: "SB · Post-Stormblood · Patch 4.56" },
+      { title: "A Requiem for Heroes", group: "SB · Post-Stormblood · Patch 4.56" },
+      { title: "The Syrcus Trench", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "City of the First", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Travelers of Norvrandt", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "In Search of Alphinaud", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Still Tide", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Open Arms, Closed Gate", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Fickle Existence", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "City of Final Pleasures", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Free to Sightsee", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Taste of Honey", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Blessed Instrument", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Emergent Splendor", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "In Search of Alisaie", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "City of the Mord", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Working Off the Meal", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Desert Crossing", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Following in Her Footprints", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Culling Their Ranks", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "A Purchase of Fruit", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "The Time Left to Us", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Tears on the Sand", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "The Lightwardens", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "Warrior of Darkness", group: "SHB · Shadowbringers · Levels 70-71" },
+      { title: "An Unwelcome Guest", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Crystarium\u0027s Resolve", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Logistics of War", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Oracle of Light", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Il Mheg, the Faerie Kingdom", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Sul Uin\u0027s Request", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Ys Iala\u0027s Errand", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Oul Sigun\u0027s Plea", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Unto the Truth", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Courting Cooperation", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Key to the Castle", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "A Visit to the Nu Mou", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "A Fitting Payment", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Spore Sweeper", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Lawless Ones", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Elder\u0027s Answer", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "A Resounding Roar", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Memento of a Friend", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "Acht-la Ormh Inn", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "The Wheel Turns", group: "SHB · Shadowbringers · Levels 72-73" },
+      { title: "A Party Soon Divided", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "A Little Faith", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Into the Dark", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "A Day in the Neighborhood", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "A Helping Hand", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Lost but Not Forgotten", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Saying Goodbye", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Stirring up Trouble", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "A Beeautiful Plan", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "An Unwanted Proposal", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Put to the Proof", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Into the Wood", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Top of the Tree", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Look to the Stars", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Mi Casa, Toupasa", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Legend of the Not-so-hidden Temple", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "The Aftermath", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "In Good Faith", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "The Burden of Knowledge", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Bearing With It", group: "SHB · Shadowbringers · Levels 74-75" },
+      { title: "Out of the Wood", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "When It Rains", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Word from On High", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Small Favors", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "The Best Way Out", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Free Trade", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "The Trolley Problem", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Rust and Ruin", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "On Track", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Down for Maintenance", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "The Truth Hurts", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "A Convenient Distraction", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "A Dirty Job", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Have a Heart", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Full Steam Ahead", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Crossing Paths", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "A Fresh Start", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "More than a Hunch", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Return to Eulmore", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "A Feast of Lies", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "Paradise Fallen", group: "SHB · Shadowbringers · Levels 76-77" },
+      { title: "The Ladder", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "The View from Above", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "In Mt. Gulg\u0027s Shadow", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "A Gigantic Undertaking", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "Meet the Tholls", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "A-Digging We Will Go", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "The Duergar\u0027s Tewel", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "Rich Veins of Hope", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "That None Shall Ever Again", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "A Breath of Respite", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "Extinguishing the Last Light", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "Reassuring the Masses", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "In His Garden", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "The Unbroken Thread", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "To Storm-tossed Seas", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "Waiting in the Depths", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "City of the Ancients", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "The Light of Inspiration", group: "SHB · Shadowbringers · Levels 78-79" },
+      { title: "The Illuminated Land", group: "SHB · Shadowbringers · Level 80" },
+      { title: "The End of a World", group: "SHB · Shadowbringers · Level 80" },
+      { title: "A Greater Purpose", group: "SHB · Shadowbringers · Level 80" },
+      { title: "Shadowbringers", group: "SHB · Shadowbringers · Level 80" },
+      { title: "Shaken Resolve", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "A Grand Adventure", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "A Welcome Guest", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Good for the Soul", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Nowhere to Turn", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "A Notable Absence", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "For the People", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Finding Good Help", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Moving Forward", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Vows of Virtue, Deeds of Cruelty", group: "SHB · Post-Shadowbringers · Patch 5.1" },
+      { title: "Old Enemies, New Threats", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "The Way Home", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "Seeking Counsel", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "Facing the Truth", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "A Sleep Disturbed", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "An Old Friend", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "Deep Designs", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "A Whale\u0027s Tale", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "Beneath the Surface", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "Echoes of a Fallen Star", group: "SHB · Post-Shadowbringers · Patch 5.2" },
+      { title: "In the Name of the Light", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Heroic Dreams", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Fraying Threads", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Food for the Soul", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Faded Memories", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Etched in the Stars", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "The Converging Light", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Hope\u0027s Confluence", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Nothing Unsaid", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "The Journey Continues", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Unto the Morrow", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Reflections in Crystal", group: "SHB · Post-Shadowbringers · Patch 5.3" },
+      { title: "Alisaie\u0027s Quest", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "The Wisdom of Allag", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "Reviving the Legacy", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "Forget Us Not", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "Like Master, Like Pupil", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "The Admiral\u0027s Resolve", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "The Search for Sicard", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "On Rough Seas", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "The Great Ship Vylbrand", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "Futures Rewritten", group: "SHB · Post-Shadowbringers · Patch 5.4" },
+      { title: "Unto the Breach", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "Here Be Dragons", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "Righteous Indignation", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "For Vengeance", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "The Flames of War", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "When the Dust Settles", group: "SHB · Post-Shadowbringers · Patch 5.5" },
+      { title: "The Company We Keep", group: "SHB · Post-Shadowbringers · Patch 5.55" },
+      { title: "On Official Business", group: "SHB · Post-Shadowbringers · Patch 5.55" },
+      { title: "Death Unto Dawn", group: "SHB · Post-Shadowbringers · Patch 5.55" },
+      { title: "The Next Ship to Sail", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Old Sharlayan, New to You", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Hitting the Books", group: "EW · Endwalker · Levels 80-81" },
+      { title: "A Seat at the Last Stand", group: "EW · Endwalker · Levels 80-81" },
+      { title: "A Labyrinthine Descent", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Glorified Ratcatcher", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Deeper into the Maze", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Medial Circuit", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Full Report, Warts and All", group: "EW · Endwalker · Levels 80-81" },
+      { title: "A Guide of Sorts", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Estate Visitor", group: "EW · Endwalker · Levels 80-81" },
+      { title: "For Thavnair Bound", group: "EW · Endwalker · Levels 80-81" },
+      { title: "On Low Tide", group: "EW · Endwalker · Levels 80-81" },
+      { title: "A Fisherman\u0027s Friend", group: "EW · Endwalker · Levels 80-81" },
+      { title: "House of Divinities", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Great Work", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Shadowed Footsteps", group: "EW · Endwalker · Levels 80-81" },
+      { title: "A Boy\u0027s Errand", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Tipping the Scale", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Satrap of Radz-at-Han", group: "EW · Endwalker · Levels 80-81" },
+      { title: "In the Dark of the Tower", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Jewel of Thavnair", group: "EW · Endwalker · Levels 80-81" },
+      { title: "The Color of Joy", group: "EW · Endwalker · Levels 80-81" },
+      { title: "Sound the Bell, School\u0027s In", group: "EW · Endwalker · Levels 82-83" },
+      { title: "A Capital Idea", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Best of the Best", group: "EW · Endwalker · Levels 82-83" },
+      { title: "A Frosty Reception", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Tracks in the Snow", group: "EW · Endwalker · Levels 82-83" },
+      { title: "How the Mighty Are Fallen", group: "EW · Endwalker · Levels 82-83" },
+      { title: "At the End of the Trail", group: "EW · Endwalker · Levels 82-83" },
+      { title: "A Way Forward", group: "EW · Endwalker · Levels 82-83" },
+      { title: "The Last Bastion", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Personae non Gratae", group: "EW · Endwalker · Levels 82-83" },
+      { title: "His Park Materials", group: "EW · Endwalker · Levels 82-83" },
+      { title: "No Good Deed", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Alea Iacta Est", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Strange Bedfellows", group: "EW · Endwalker · Levels 82-83" },
+      { title: "In from the Cold", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Gateway of the Gods", group: "EW · Endwalker · Levels 82-83" },
+      { title: "A Trip to the Moon", group: "EW · Endwalker · Levels 82-83" },
+      { title: "Sea of Sorrow", group: "EW · Endwalker · Levels 82-83" },
+      { title: "The Martyr", group: "EW · Endwalker · Levels 82-83" },
+      { title: "In Shadow\u0027s Wake", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Helping Hands", group: "EW · Endwalker · Levels 84-85" },
+      { title: "A Harey Situation", group: "EW · Endwalker · Levels 84-85" },
+      { title: "A Taste of the Moon", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Styled a Hero", group: "EW · Endwalker · Levels 84-85" },
+      { title: "All\u0027s Vale That Endsvale", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Back to Old Tricks", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Setting Things Straight", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Heart of the Matter", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Returning Home", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Skies Aflame", group: "EW · Endwalker · Levels 84-85" },
+      { title: "The Blasphemy Unmasked", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Amidst the Apocalypse", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Beyond the Depths of Despair", group: "EW · Endwalker · Levels 84-85" },
+      { title: "That We Might Live", group: "EW · Endwalker · Levels 84-85" },
+      { title: "When All Hope Seems Lost", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Warm Hearts, Rekindled Hopes", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Simple Pleasures", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Under His Wing", group: "EW · Endwalker · Levels 84-85" },
+      { title: "At World\u0027s End", group: "EW · Endwalker · Levels 84-85" },
+      { title: "Return to the Crystarium", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Hope Upon a Flower", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Petalouda Hunt", group: "EW · Endwalker · Levels 86-87" },
+      { title: "In Search of Hermes", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Ponder, Warrant, Cherish, Welcome", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Lives Apart", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Their Greatest Contribution", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Aether to Aether", group: "EW · Endwalker · Levels 86-87" },
+      { title: "A Sentimental Gift", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Verdict and Execution", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Travelers at the Crossroads", group: "EW · Endwalker · Levels 86-87" },
+      { title: "A Past, Not Yet Come to Pass", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Witness to the Spectacle", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Worthy of His Back", group: "EW · Endwalker · Levels 86-87" },
+      { title: "A Flower upon Your Return", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Hunger in the Garden", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Words without Sound", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Follow, Wander, Stumble, Listen", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Caging the Messenger", group: "EW · Endwalker · Levels 86-87" },
+      { title: "Thou Must Live, Die, and Know", group: "EW · Endwalker · Levels 86-87" },
+      { title: "As the Heavens Burn", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Outside Help", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Going Underground", group: "EW · Endwalker · Levels 88-89" },
+      { title: "No Job Too Small", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Wise Guides", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Agriculture Shock", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Sage Council", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Hither and Yarns", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Once Forged", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Bonds of Adamant(ite)", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Her Children, One and All", group: "EW · Endwalker · Levels 88-89" },
+      { title: "A Bold Decision", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Friends Gathered", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Unto the Heavens", group: "EW · Endwalker · Levels 88-89" },
+      { title: "A Strange New World", group: "EW · Endwalker · Levels 88-89" },
+      { title: "On Burdεned ωings", group: "EW · Endwalker · Levels 88-89" },
+      { title: "A Test of Wιll", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Roads Pαved││Sacri┣ice", group: "EW · Endwalker · Levels 88-89" },
+      { title: "F//εsh AbanΔon┨Δ", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Where Kn∞wledge Leads", group: "EW · Endwalker · Levels 88-89" },
+      { title: "Vic┨οry ̈ ̈ ̈╳, │̆││ε Lost", group: "EW · Endwalker · Level 90" },
+      { title: "┣┨̈//̈ No┨ΦounΔ•••", group: "EW · Endwalker · Level 90" },
+      { title: "Hello, World", group: "EW · Endwalker · Level 90" },
+      { title: "Forge Ahead", group: "EW · Endwalker · Level 90" },
+      { title: "You\u0027re Not Alone", group: "EW · Endwalker · Level 90" },
+      { title: "Endwalker", group: "EW · Endwalker · Level 90" },
+      { title: "Newfound Adventure", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Bountiful Ruins", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Friends for the Road", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Alzadaal\u0027s Legacy", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "A Brother\u0027s Grief", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Sharing the Wealth", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Bridging the Rift", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Restricted Reading", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "Void Theory", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "A Satrap\u0027s Duty", group: "EW · Post-Endwalker · Patch 6.1" },
+      { title: "In Search of Azdaja", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Shadowed Remnants", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Where Everything Begins", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Groping in the Dark", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Nowhere to Run", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "The Wind Rises", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Return from the Void", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "A World with Light and Life", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Buried Memory", group: "EW · Post-Endwalker · Patch 6.2" },
+      { title: "Once More unto the Void", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "A Cold Reunion", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "Kindled Spirit", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "An Unforeseen Bargain", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "King of the Mountain", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "A Dragon\u0027s Resolve", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "Paths Barred", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "Desires Untold", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "Gods Revel, Lands Tremble", group: "EW · Post-Endwalker · Patch 6.3" },
+      { title: "Currying Flavor", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Going Haam", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Like Fear to Flame", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "The Fallen Empire", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Bonds of Trust", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Lunar Rendezvous", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "The Red Side of the Moon", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Abyssal Dark", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "The Dark Throne", group: "EW · Post-Endwalker · Patch 6.4" },
+      { title: "Seeking the Light", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "Appealing to the Masses", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "In Defiance of Fate", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "Back to Action", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "Down in the Dark", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "Reunited at Last", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "Growing Light", group: "EW · Post-Endwalker · Patch 6.5" },
+      { title: "When One Door Closes...", group: "EW · Post-Endwalker · Patch 6.55" },
+      { title: "The Game Is Afoot", group: "EW · Post-Endwalker · Patch 6.55" },
+      { title: "The Coming Dawn", group: "EW · Post-Endwalker · Patch 6.55" },
+      { title: "A New World to Explore", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Nation of Tuliyollal", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A City of Stairs", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A Saga in Stone", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Rite of Succession", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "To Kozama\u0027uka", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A Festive People", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Feat of Reeds", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A Well-mannered Shipwright", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Lifting of Wings", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "Knowing the Hanuhanu", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "To Urqopacha", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "Traders of Happiness", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Feat of Gold", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "Mablu\u0027s Dream", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A Premium Deal", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "Wuk Lamat in the Saddle", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "Knowing the Pelupelu", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "The Success of Others", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "For All Turali", group: "DT · Dawntrail · Levels 90-91" },
+      { title: "A Leaking Workpot", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "Lending a Helphand", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Feat of Pots", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "A Father First", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Shape of Peace", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "Lost Promise", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "A Brother\u0027s Duty", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "Feeding the River", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "Sibling Rescue", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "History\u0027s Keepers", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Feat of Proof", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The High Luminary", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "An Echo of Madness", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "Pointing the Way", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Skyruin", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Feat of Ice", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Promise of Peace", group: "DT · Dawntrail · Levels 92-93" },
+      { title: "The Leap to Yak T\u0027el", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Village of the Hunt", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "A History of Violence", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "The Feat of Repast", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "A Father\u0027s Grief", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Taking a Stand", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Into the Traverse", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "City of Silence", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Blessed Siblings", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Scale of Trust", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Mamook Speaks", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "The Feat of the Brotherhood", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Road to the Golden City", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Dawn of a New Tomorrow", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Ever Greater, Ever Brighter", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "The Long Road to Xak Tural", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Saddled Up", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Braced for Trouble", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Blowing Smoke", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "Law of the Land", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "On Track", group: "DT · Dawntrail · Levels 94-95" },
+      { title: "One with Nature", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "And the Land Would Tremble", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "No Time for Tears", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Pick up the Pieces", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Together as One", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "In Yyasulani\u0027s Shadow", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Putting Plans into Locomotion", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "A Hot Commodity", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "All Aboard", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "The Land of Levin", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "A Royal Welcome", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "A Day in the Life", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "On the Cloud", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Gone and Forgotten", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Embracing Oblivion", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Solution Nine", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "The Queen\u0027s Tour", group: "DT · Dawntrail · Levels 96-97" },
+      { title: "Her People, Her Family", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Scales of Blue", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Gives You Teeth", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Little Footfalls", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Drowned Vestiges", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Memories of a Knight", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "At a Crossroads", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "The Protector and the Destroyer", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "A Comforting Hand", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Unto the Summit", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "The Resilient Son", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "A New Family", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "In Pursuit of Sphene", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Through the Gate of Gold", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "Those Who Live Forever", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "In Serenity and Sorrow", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "The Land of Dreams", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "A Knight of Alexandria", group: "DT · Dawntrail · Levels 98-99" },
+      { title: "The Sanctuary of the Strong", group: "DT · Dawntrail · Level 100" },
+      { title: "The Taste of Family", group: "DT · Dawntrail · Level 100" },
+      { title: "Leafing through the Past", group: "DT · Dawntrail · Level 100" },
+      { title: "An Explorer\u0027s Delight", group: "DT · Dawntrail · Level 100" },
+      { title: "In Search of Discovery", group: "DT · Dawntrail · Level 100" },
+      { title: "A Journey Never-ending", group: "DT · Dawntrail · Level 100" },
+      { title: "Dawntrail", group: "DT · Dawntrail · Level 100" },
+      { title: "A Royal Invitation", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "Alexandria Mourns", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "In Search of the Past", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "Among the Abandoned", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "Guidance of the Hhetso", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "The Warmth of Family", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "Crossroads", group: "DT · Post-Dawntrail · Patch 7.1" },
+      { title: "A Glimmer of the Past", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "Memories of a Bygone Age", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "In Search of Meaning", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "A Jewel Shattered", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "The Meeting", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "Descent to the Foundation", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "Shared Paths", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "Seekers of Eternity", group: "DT · Post-Dawntrail · Patch 7.2" },
+      { title: "Targeted Tragedy", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "The Endless Choice", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "My Memories and Yours", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "A Darkness in the Heart", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "Preservation Their Purpose", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "A Calculated Evolution", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "One of Our Own", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "A Terminal Invitation", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "Blades in Waiting", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "The Promise of Tomorrow", group: "DT · Post-Dawntrail · Patch 7.3" },
+      { title: "With the Winds", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Through the Thunder", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Beyond the Mountains", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Around the City", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "To Work", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "In Her Heart", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Toward Trouble", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Where We Call Home", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "Into the Mist", group: "DT · Post-Dawntrail · Patch 7.4" },
+      { title: "In Fate\u0027s Footsteps", group: "DT · Post-Dawntrail · Patch 7.5" },
+      { title: "Two Worlds Entwined", group: "DT · Post-Dawntrail · Patch 7.5" },
+      { title: "A Grave Presentiment", group: "DT · Post-Dawntrail · Patch 7.5" },
+      { title: "A Beacon from Beyond", group: "DT · Post-Dawntrail · Patch 7.5" },
+      { title: "Trail to the Heavens", group: "DT · Post-Dawntrail · Patch 7.5" },
+      { title: "A Winter\u0027s Dream", group: "DT · Post-Dawntrail · Patch 7.56" },
+      { title: "A Rush of Cold Wind", group: "DT · Post-Dawntrail · Patch 7.56" },
+      { title: "The World Locked in Ice", group: "DT · Post-Dawntrail · Patch 7.56" },
+      { title: "Windborne", group: "DT · Post-Dawntrail · Patch 7.56" }
     ];
 
     /**
@@ -626,8 +1125,7 @@
     }
 
     /**
-     * Updates the summary badge for each expanded group.
-     * If all quests in a section are checked, it marks the section complete and collapses it.
+     * Updates each group's completion indicator and collapses groups completed through quest checkboxes.
      */
     function updateExpandedGroupStatus() {
       document.querySelectorAll('#expandedView .expanded-group').forEach((group) => {
@@ -636,23 +1134,27 @@
 
         const groupName = group.dataset.groupName || '';
         const complete = isExpandedGroupComplete(groupName);
-        const count = group.dataset.count || '0';
+        const questChecks = Array.from(group.querySelectorAll('.expanded-check'));
+        const count = questChecks.length;
+        const completedCount = questChecks.filter((checkbox) => checkbox.checked).length;
         const previousState = group.dataset.complete === 'true';
+        const countLabel = summary.querySelector('.group-count');
+        const status = summary.querySelector('.group-status');
+        if (!countLabel || !status) return;
 
-        summary.innerHTML = `
-          <span class="group-title-wrap">
-            <span class="group-label">${groupName}</span>
-          </span>
-          <span class="summary-meta">
-            <span class="group-count">${count}</span>
-            <span class="group-status ${complete ? 'complete' : ''}" title="${complete ? 'All quests complete' : 'Progress in this group'}">${complete ? '✓' : ''}</span>
-          </span>
-        `;
+        countLabel.textContent = `${completedCount} / ${count}`;
+        status.classList.toggle('complete', complete);
+        status.title = complete ? 'Uncheck all quests in this group' : 'Complete all quests in this group';
+        status.setAttribute('aria-label', `${complete ? 'Uncheck all quests in' : 'Complete all quests in'} ${groupName}`);
+        status.setAttribute('aria-checked', String(complete));
+        status.textContent = complete ? '✓' : '';
 
         group.dataset.complete = String(complete);
         group.classList.toggle('group-complete', complete);
+        const keepOpenAfterStatusClick = group.dataset.keepOpenAfterStatusClick === 'true';
+        delete group.dataset.keepOpenAfterStatusClick;
 
-        if (complete && !previousState) {
+        if (complete && !previousState && !keepOpenAfterStatusClick) {
           const activeEl = document.activeElement;
           const previousScrollY = Number(group.dataset.scrollSnapshot || window.scrollY);
           if (activeEl instanceof HTMLElement) {
@@ -674,6 +1176,43 @@
       const listEl = document.getElementById('expandedQuestBook');
       if (!listEl) return;
 
+      if (!listEl.dataset.groupStatusControlsInitialized) {
+        listEl.addEventListener('click', (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+
+          const status = target.closest('.group-status[role="checkbox"]');
+          if (!status) return;
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const group = status.closest('.expanded-group');
+          if (!group) return;
+
+          const questChecks = Array.from(group.querySelectorAll('.expanded-check'));
+          const shouldComplete = questChecks.some((checkbox) => !checkbox.checked);
+          if (shouldComplete) {
+            group.dataset.keepOpenAfterStatusClick = 'true';
+          }
+          questChecks.forEach((checkbox) => {
+            checkbox.checked = shouldComplete;
+          });
+          saveState();
+        });
+
+        listEl.addEventListener('keydown', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement) || !target.matches('.group-status[role="checkbox"]')) return;
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+
+          event.preventDefault();
+          event.stopPropagation();
+          target.click();
+        });
+        listEl.dataset.groupStatusControlsInitialized = 'true';
+      }
+
       listEl.innerHTML = '';
 
       const grouped = new Map();
@@ -687,7 +1226,6 @@
         const group = document.createElement('details');
         group.className = 'expanded-group';
         group.dataset.groupName = groupName;
-        group.dataset.count = String(items.length);
         group.open = true;
 
         const summary = document.createElement('summary');
@@ -696,8 +1234,8 @@
             <span class="group-label">${groupName}</span>
           </span>
           <span class="summary-meta">
-            <span class="group-count">${items.length}</span>
-            <span class="group-status" title="Progress in this group"></span>
+            <span class="group-count">0 / ${items.length}</span>
+            <span class="group-status" role="checkbox" tabindex="0" aria-checked="false" title="Complete all quests in this group"></span>
           </span>
         `;
 

@@ -249,7 +249,13 @@
       font-size: 0.8rem;
       font-weight: 900;
       flex-shrink: 0;
+      cursor: pointer;
       transition: all 0.2s ease;
+    }
+
+    .group-status:focus-visible {
+      outline: 2px solid var(--gold-strong);
+      outline-offset: 3px;
     }
 
     .group-status.complete {
