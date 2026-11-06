@@ -24,6 +24,7 @@
  *   v1.0.4 - Locked the tracker to the expanded questbook as the single source of truth.
  *   v1.0.5 - Showed completed and total quests for each expanded group.
  *   v1.0.6 - Added complete MSQ coverage through Dawntrail patch 7.56 and group completion controls.
+ *   v1.0.7 - Excluded optional trailer checkboxes from overall quest progress.
  */
     const STORAGE_KEY = 'ffxiv-story-tracker-v2';
     const VERSION_HISTORY = [
@@ -33,7 +34,8 @@
       { version: 'v1.0.3', notes: 'Recalculated the next recommended step strictly from the expanded questbook.' },
       { version: 'v1.0.4', notes: 'Locked the tracker to the expanded questbook as the single source of truth.' },
       { version: 'v1.0.5', notes: 'Showed completed and total quests for each expanded group.' },
-      { version: 'v1.0.6', notes: 'Added complete MSQ coverage through Dawntrail patch 7.56 and group completion controls.' }
+      { version: 'v1.0.6', notes: 'Added complete MSQ coverage through Dawntrail patch 7.56 and group completion controls.' },
+      { version: 'v1.0.7', notes: 'Excluded optional trailer checkboxes from overall quest progress.' }
     ];
     const APP_VERSION = VERSION_HISTORY[VERSION_HISTORY.length - 1].version;
     let allChecks = [];
@@ -1300,8 +1302,8 @@
      * Calculates the overall completion percentage and updates the progress bar label.
      */
     function updateProgress() {
-      const total = allChecks.length;
-      const complete = allChecks.filter((item) => item.checked).length;
+      const total = storyChecks.length;
+      const complete = storyChecks.filter((item) => item.checked).length;
       const percent = total ? Math.round((complete / total) * 100) : 0;
 
       progressFill.style.width = `${percent}%`;
