@@ -1,4 +1,4 @@
-:root {
+    :root {
       --bg: #0b1020;
       --bg-2: #111827;
       --panel: #171d2d;
@@ -202,6 +202,7 @@
       justify-content: space-between;
       gap: 12px;
       padding: 14px 16px;
+      font-size: 0.96rem;
       font-weight: 700;
       color: var(--gold-strong);
       background: rgba(111, 126, 247, 0.06);
@@ -219,6 +220,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 0.94rem;
+      letter-spacing: 0.02em;
     }
 
     .summary-meta {
@@ -230,6 +233,7 @@
     }
 
     .group-count {
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--gold-strong);
       min-width: 1.5em;
