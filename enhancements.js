@@ -2,9 +2,12 @@
  * FFXIV Story & Trailer Tracker — local enhancement layer.
  *
  * Version history:
- *   v1.2.0 - Added resume navigation, a private local session note, and combined quest search/filters.
- *            Keeps legacy quest progress (ffxiv-story-tracker-v2) and group display
- *            state (ffxiv-story-tracker-groups-v1) separate and unchanged.
+ *   v1.2.0 - Resume navigation, local session note, and combined quest search/filters.
+ *   v1.2.1 - Restore group disclosure only after the historical renderer finishes;
+ *            centralize group-state persistence here to avoid startup races.
+ *
+ * Compatibility: legacy checkbox state remains in ffxiv-story-tracker-v2.
+ * Group state stays in ffxiv-story-tracker-groups-v1; the note uses its own key.
  */
 (() => {
   'use strict';
@@ -24,55 +27,51 @@
   const resumeButton = document.getElementById('resumeButton');
   const noteField = document.getElementById('sessionNote');
   const noteMessage = document.getElementById('noteMessage');
-  let groupsReady = false;
-  let currentNextId = null;
+  let initialized = false;
+  let settleTimer = 0;
 
   function safeRead(key) {
-    try { return localStorage.getItem(key); } catch (error) {
-      console.warn(`Local storage read failed for ${key}:`, error);
-      return null;
-    }
+    try { return localStorage.getItem(key); }
+    catch (error) { console.warn(`Local storage read failed for ${key}:`, error); return null; }
   }
 
   function safeWrite(key, value) {
-    try { localStorage.setItem(key, value); return true; } catch (error) {
-      console.warn(`Local storage write failed for ${key}:`, error);
-      return false;
-    }
+    try { localStorage.setItem(key, value); return true; }
+    catch (error) { console.warn(`Local storage write failed for ${key}:`, error); return false; }
   }
 
   function groups() {
     return Array.from(list.querySelectorAll(':scope > .expanded-group'));
   }
 
-  // Apply persisted disclosure state only after the legacy renderer has created
-  // the complete list. This prevents the renderer's default-open state from
-  // overwriting saved values before they can be restored.
-  function restoreGroupState() {
-    const renderedGroups = groups();
-    if (!renderedGroups.length || groupsReady) return;
+  function expansionKey(groupName) {
+    const prefix = (groupName || '').split(' · ')[0].trim().toUpperCase();
+    const labels = { ARR: 'A Realm Reborn', HW: 'Heavensward', SB: 'Stormblood', SHB: 'Shadowbringers', EW: 'Endwalker', DT: 'Dawntrail' };
+    return labels[prefix] || prefix;
+  }
+
+  function saveGroupState() {
+    const state = Object.fromEntries(groups().filter((group) => group.dataset.groupName)
+      .map((group) => [group.dataset.groupName, group.open]));
+    safeWrite(GROUP_STATE_KEY, JSON.stringify(state));
+  }
+
+  function restoreGroupState(renderedGroups) {
     let saved = {};
     try {
       const raw = safeRead(GROUP_STATE_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) saved = parsed;
     } catch (error) {
-      console.warn('Saved quest group state is invalid; using defaults.', error);
+      console.warn('Saved quest group state is invalid; retaining defaults.', error);
     }
 
+    // Restore before event handlers are added so startup mutations cannot overwrite saved values.
     renderedGroups.forEach((group) => {
       const name = group.dataset.groupName;
       if (name && typeof saved[name] === 'boolean') group.open = saved[name];
-      group.addEventListener('toggle', () => saveGroupState());
+      group.addEventListener('toggle', saveGroupState);
     });
-    groupsReady = true;
-  }
-
-  function saveGroupState() {
-    if (!groupsReady) return;
-    const state = Object.fromEntries(groups().filter((group) => group.dataset.groupName)
-      .map((group) => [group.dataset.groupName, group.open]));
-    safeWrite(GROUP_STATE_KEY, JSON.stringify(state));
   }
 
   function questRows() {
@@ -84,16 +83,15 @@
     })).filter((item) => item.checkbox && item.group);
   }
 
-  function expansionKey(groupName) {
+  function expansionKeyForFilter(groupName) {
     const prefix = (groupName || '').split(' · ')[0].trim().toUpperCase();
-    const labels = { ARR: 'A Realm Reborn', HW: 'Heavensward', SB: 'Stormblood', SHB: 'Shadowbringers', EW: 'Endwalker', DT: 'Dawntrail' };
-    return labels[prefix] || prefix;
+    const names = { ARR: 'A Realm Reborn', HW: 'Heavensward', SB: 'Stormblood', SHB: 'Shadowbringers', EW: 'Endwalker', DT: 'Dawntrail' };
+    return names[prefix] || prefix;
   }
 
   function populateExpansionFilter() {
     if (!expansionFilter || expansionFilter.dataset.ready) return;
-    const options = [...new Set(groups().map((group) => expansionKey(group.dataset.groupName)))];
-    options.forEach((name) => {
+    [...new Set(groups().map((group) => expansionKeyForFilter(group.dataset.groupName)))].forEach((name) => {
       if (!name) return;
       const option = document.createElement('option');
       option.value = name;
@@ -110,32 +108,31 @@
     let visibleCount = 0;
 
     groups().forEach((group) => {
-      let groupVisible = 0;
-      const groupExpansion = expansionKey(group.dataset.groupName);
+      let groupCount = 0;
+      const groupExpansion = expansionKeyForFilter(group.dataset.groupName);
       group.querySelectorAll('.expanded-row').forEach((row) => {
         const check = row.querySelector('.expanded-check');
         const title = row.querySelector('.task-text')?.textContent.trim() || '';
-        const matchesText = title.toLocaleLowerCase().includes(query);
-        const matchesStatus = status === 'all' || (status === 'completed' ? check?.checked : !check?.checked);
-        const matchesExpansion = expansion === 'all' || expansion === groupExpansion;
-        const visible = matchesText && matchesStatus && matchesExpansion;
+        const visible = title.toLocaleLowerCase().includes(query)
+          && (status === 'all' || (status === 'completed' ? Boolean(check?.checked) : !check?.checked))
+          && (expansion === 'all' || expansion === groupExpansion);
         row.hidden = !visible;
-        if (visible) { groupVisible += 1; visibleCount += 1; }
+        if (visible) { groupCount += 1; visibleCount += 1; }
       });
-      group.hidden = groupVisible === 0;
+      group.hidden = groupCount === 0;
     });
 
     if (resultCount) resultCount.textContent = `${visibleCount} ${visibleCount === 1 ? 'quest' : 'quests'} gevonden`;
-    if (noResults) noResults.hidden = visibleCount !== 0;
+    if (noResults) noResults.hidden = visibleCount > 0;
   }
 
   function nextIncomplete() {
+    // The historical renderer follows the canonical chronological quest array.
     return questRows().find(({ checkbox }) => !checkbox.checked) || null;
   }
 
   function updateResume() {
     const next = nextIncomplete();
-    currentNextId = next?.checkbox.dataset.id || null;
     if (!next) {
       if (resumeQuest) resumeQuest.textContent = 'Alle quests zijn voltooid. Goed gedaan!';
       if (resumeGroup) resumeGroup.textContent = '';
@@ -150,24 +147,18 @@
   function goToNextQuest() {
     const next = nextIncomplete();
     if (!next) { updateResume(); return; }
-    // Search/filter visibility must not prevent navigation to the true next MSQ.
     if (searchInput) searchInput.value = '';
     if (progressFilter) progressFilter.value = 'all';
     if (expansionFilter) expansionFilter.value = 'all';
     applyQuestFilters();
-
-    const group = next.group;
-    group.hidden = false;
-    group.open = true;
-    const questId = next.checkbox.dataset.id;
-    const target = list.querySelector(`.expanded-check[data-id="${CSS.escape(questId)}"]`)?.closest('.expanded-row');
-    if (!target) return;
-    target.hidden = false;
-    target.classList.remove('resume-highlight');
-    void target.offsetWidth;
-    target.classList.add('resume-highlight');
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    window.setTimeout(() => target.classList.remove('resume-highlight'), 2400);
+    next.group.hidden = false;
+    next.group.open = true;
+    next.row.hidden = false;
+    next.row.classList.remove('resume-highlight');
+    void next.row.offsetWidth;
+    next.row.classList.add('resume-highlight');
+    next.row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => next.row.classList.remove('resume-highlight'), 2400);
   }
 
   function initializeNote() {
@@ -178,19 +169,26 @@
       if (noteMessage) noteMessage.textContent = saved ? 'Notitie opgeslagen.' : 'Opslaan is niet gelukt in deze browser.';
     });
     document.getElementById('clearNote')?.addEventListener('click', () => {
-      try { localStorage.removeItem(NOTE_STORAGE_KEY); } catch (error) {
-        console.warn('Could not clear the session note:', error);
-      }
-      noteField.value = '';
-      if (noteMessage) noteMessage.textContent = 'Notitie gewist.';
+      let cleared = false;
+      try { localStorage.removeItem(NOTE_STORAGE_KEY); cleared = true; }
+      catch (error) { console.warn('Could not clear the session note:', error); }
+      if (cleared) noteField.value = '';
+      if (noteMessage) noteMessage.textContent = cleared ? 'Notitie gewist.' : 'Wissen is niet gelukt in deze browser.';
     });
   }
 
-  function initialize() {
-    restoreGroupState();
-    populateExpansionFilter();
-    applyQuestFilters();
-    updateResume();
+  function initializeWhenStable() {
+    if (initialized) return;
+    window.clearTimeout(settleTimer);
+    settleTimer = window.setTimeout(() => {
+      const renderedGroups = groups();
+      if (!renderedGroups.length || !renderedGroups.every((group) => group.querySelector('.expanded-check'))) return;
+      initialized = true;
+      restoreGroupState(renderedGroups);
+      populateExpansionFilter();
+      applyQuestFilters();
+      updateResume();
+    }, 100);
   }
 
   searchInput?.addEventListener('input', applyQuestFilters);
@@ -212,7 +210,7 @@
 
   initializeNote();
   const renderObserver = new MutationObserver(() => {
-    if (!groupsReady && groups().length) initialize();
+    if (!initialized) initializeWhenStable();
     else {
       populateExpansionFilter();
       updateResume();
@@ -220,5 +218,5 @@
     }
   });
   renderObserver.observe(list, { childList: true, subtree: true });
-  initialize();
+  initializeWhenStable();
 })();

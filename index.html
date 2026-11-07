@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="app-version" content="v1.2.0" />
+  <meta name="app-version" content="v1.2.1" />
   <title>FFXIV Story &amp; Trailer Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=1.2.0" />
-  <link rel="stylesheet" href="readability.css?v=1.2.0" />
+  <link rel="stylesheet" href="styles.css?v=1.2.1" />
+  <link rel="stylesheet" href="readability.css?v=1.2.1" />
+  <link rel="stylesheet" href="tracker-v1.2.css?v=1.2.1" />
 </head>
 <body>
   <div class="top-progress">
@@ -19,7 +20,7 @@
     <header class="topbar">
       <div class="header-row">
         <div class="title-block">
-          <div class="version-badge" id="appVersion">v1.2.0</div>
+          <div class="version-badge" id="appVersion">v1.2.1</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
@@ -64,11 +65,7 @@
             </div>
             <div class="field-group">
               <label for="progressFilter">Voortgang</label>
-              <select id="progressFilter">
-                <option value="all">Alle quests</option>
-                <option value="completed">Voltooide quests</option>
-                <option value="open">Openstaande quests</option>
-              </select>
+              <select id="progressFilter"><option value="all">Alle quests</option><option value="completed">Voltooide quests</option><option value="open">Openstaande quests</option></select>
             </div>
             <div class="field-group">
               <label for="expansionFilter">Uitbreiding</label>
@@ -84,12 +81,19 @@
     </main>
   </div>
 
-  <script src="script.js?v=1.2.0"></script>
-  <script src="enhancements.js?v=1.2.0" defer></script>
+  <!-- v1.2.1 cache busts the local assets; historical quest logic remains in the legacy loader. -->
+  <script src="script.js?v=1.2.1"></script>
+  <script src="enhancements.js?v=1.2.1" defer></script>
   <script>
+    // Keep the release badge consistent with the HTML version after legacy startup.
     const versionBadge = document.getElementById('appVersion');
     const currentVersion = document.querySelector('meta[name="app-version"]').content;
-    if (versionBadge) versionBadge.textContent = currentVersion;
+    if (versionBadge) {
+      versionBadge.textContent = currentVersion;
+      new MutationObserver(() => {
+        if (versionBadge.textContent !== currentVersion) versionBadge.textContent = currentVersion;
+      }).observe(versionBadge, { childList: true, characterData: true, subtree: true });
+    }
   </script>
 </body>
 </html>
