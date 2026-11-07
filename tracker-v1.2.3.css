@@ -1,0 +1,5 @@
+/*
+ * v1.2.3: Continue the existing tracker controls styling without a redesign.
+ * The old v1.2.2 override is inlined here so the page needs one fewer stylesheet.
+ */
+.session-tools { grid-template-columns: minmax(0, 1fr); }

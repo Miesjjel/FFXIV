@@ -2,10 +2,11 @@
  * FFXIV Story & Trailer Tracker — local enhancement layer.
  *
  * Version history:
- *   v1.2.0 - Resume navigation, local session note, and combined quest search/filters.
+ *   v1.2.0 - Resume navigation and combined quest search/filters.
  *   v1.2.1 - Restore group disclosure only after the historical renderer finishes;
  *            centralize group-state persistence to avoid startup races.
- *   v1.2.2 - Removed the session-note interface and storage; retain resume/search/filter tools.
+ *   v1.2.2 - Removed the session-note interface and storage.
+ *   v1.2.3 - Maintenance release; retain existing behavior and storage compatibility.
  *
  * Compatibility: legacy checkbox state remains in ffxiv-story-tracker-v2.
  * Group state stays in ffxiv-story-tracker-groups-v1.
@@ -84,15 +85,9 @@
     })).filter((item) => item.checkbox && item.group);
   }
 
-  function expansionKeyForFilter(groupName) {
-    const prefix = (groupName || '').split(' · ')[0].trim().toUpperCase();
-    const names = { ARR: 'A Realm Reborn', HW: 'Heavensward', SB: 'Stormblood', SHB: 'Shadowbringers', EW: 'Endwalker', DT: 'Dawntrail' };
-    return names[prefix] || prefix;
-  }
-
   function populateExpansionFilter() {
     if (!expansionFilter || expansionFilter.dataset.ready) return;
-    [...new Set(groups().map((group) => expansionKeyForFilter(group.dataset.groupName)))].forEach((name) => {
+    [...new Set(groups().map((group) => expansionKey(group.dataset.groupName)))].forEach((name) => {
       if (!name) return;
       const option = document.createElement('option');
       option.value = name;
@@ -109,7 +104,7 @@
     let visibleCount = 0;
     groups().forEach((group) => {
       let groupCount = 0;
-      const groupExpansion = expansionKeyForFilter(group.dataset.groupName);
+      const groupExpansion = expansionKey(group.dataset.groupName);
       group.querySelectorAll('.expanded-row').forEach((row) => {
         const check = row.querySelector('.expanded-check');
         const title = row.querySelector('.task-text')?.textContent.trim() || '';
