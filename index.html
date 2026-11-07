@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="app-version" content="v1.2.1" />
+  <meta name="app-version" content="v1.2.2" />
   <title>FFXIV Story &amp; Trailer Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=1.2.1" />
-  <link rel="stylesheet" href="readability.css?v=1.2.1" />
-  <link rel="stylesheet" href="tracker-v1.2.css?v=1.2.1" />
+  <link rel="stylesheet" href="styles.css?v=1.2.2" />
+  <link rel="stylesheet" href="readability.css?v=1.2.2" />
+  <link rel="stylesheet" href="tracker-v1.2.css?v=1.2.2" />
+  <link rel="stylesheet" href="tracker-v1.2.2.css?v=1.2.2" />
 </head>
 <body>
   <div class="top-progress">
@@ -20,7 +21,7 @@
     <header class="topbar">
       <div class="header-row">
         <div class="title-block">
-          <div class="version-badge" id="appVersion">v1.2.1</div>
+          <div class="version-badge" id="appVersion">v1.2.2</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
@@ -30,7 +31,7 @@
     </header>
 
     <main>
-      <section class="session-tools" aria-label="Session tools">
+      <section class="session-tools" aria-label="Verder met de verhaallijn">
         <section class="tool-card resume-card" aria-labelledby="resumeHeading">
           <div>
             <h2 id="resumeHeading">Hervatten</h2>
@@ -38,17 +39,6 @@
             <p id="resumeGroup" class="resume-group"></p>
           </div>
           <button id="resumeButton" class="tool-button primary-button" type="button">Ga verder</button>
-        </section>
-
-        <section class="tool-card note-card" aria-labelledby="noteHeading">
-          <h2 id="noteHeading">Sessienotitie</h2>
-          <label class="visually-hidden" for="sessionNote">Persoonlijke sessienotitie</label>
-          <textarea id="sessionNote" rows="3" maxlength="1000" placeholder="Waar ben ik gebleven? Wat wil ik de volgende keer doen?"></textarea>
-          <div class="note-actions">
-            <button id="saveNote" class="tool-button primary-button" type="button">Notitie opslaan</button>
-            <button id="clearNote" class="tool-button" type="button">Wissen</button>
-            <span id="noteMessage" class="tool-message" aria-live="polite"></span>
-          </div>
         </section>
       </section>
 
@@ -81,9 +71,9 @@
     </main>
   </div>
 
-  <!-- v1.2.1 cache busts the local assets; historical quest logic remains in the legacy loader. -->
-  <script src="script.js?v=1.2.1"></script>
-  <script src="enhancements.js?v=1.2.1" defer></script>
+  <!-- v1.2.2 cache-busted local assets; historical quest logic remains in the legacy loader. -->
+  <script src="script.js?v=1.2.2"></script>
+  <script src="enhancements.js?v=1.2.2" defer></script>
   <script>
     // Keep the release badge consistent with the HTML version after legacy startup.
     const versionBadge = document.getElementById('appVersion');

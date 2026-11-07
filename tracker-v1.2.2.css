@@ -1,0 +1,2 @@
+/* v1.2.2 — the session note was removed; let the resume card use the full row. */
+.session-tools { grid-template-columns: minmax(0, 1fr); }

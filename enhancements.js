@@ -4,18 +4,23 @@
  * Version history:
  *   v1.2.0 - Resume navigation, local session note, and combined quest search/filters.
  *   v1.2.1 - Restore group disclosure only after the historical renderer finishes;
- *            centralize group-state persistence here to avoid startup races.
+ *            centralize group-state persistence to avoid startup races.
+ *   v1.2.2 - Removed the session-note interface and storage; retain resume/search/filter tools.
  *
  * Compatibility: legacy checkbox state remains in ffxiv-story-tracker-v2.
- * Group state stays in ffxiv-story-tracker-groups-v1; the note uses its own key.
+ * Group state stays in ffxiv-story-tracker-groups-v1.
  */
 (() => {
   'use strict';
 
   const GROUP_STATE_KEY = 'ffxiv-story-tracker-groups-v1';
-  const NOTE_STORAGE_KEY = 'ffxiv-story-tracker-note-v1';
+  const RETIRED_NOTE_KEY = 'ffxiv-story-tracker-note-v1';
   const list = document.getElementById('expandedQuestBook');
   if (!list) return;
+
+  // Remove only the retired note's app-owned value; leave quest and group data intact.
+  try { localStorage.removeItem(RETIRED_NOTE_KEY); }
+  catch (error) { console.warn('Could not remove the retired session note:', error); }
 
   const searchInput = document.getElementById('questSearch');
   const progressFilter = document.getElementById('progressFilter');
@@ -25,8 +30,6 @@
   const resumeQuest = document.getElementById('resumeQuest');
   const resumeGroup = document.getElementById('resumeGroup');
   const resumeButton = document.getElementById('resumeButton');
-  const noteField = document.getElementById('sessionNote');
-  const noteMessage = document.getElementById('noteMessage');
   let initialized = false;
   let settleTimer = 0;
 
@@ -65,8 +68,6 @@
     } catch (error) {
       console.warn('Saved quest group state is invalid; retaining defaults.', error);
     }
-
-    // Restore before event handlers are added so startup mutations cannot overwrite saved values.
     renderedGroups.forEach((group) => {
       const name = group.dataset.groupName;
       if (name && typeof saved[name] === 'boolean') group.open = saved[name];
@@ -106,7 +107,6 @@
     const status = progressFilter?.value || 'all';
     const expansion = expansionFilter?.value || 'all';
     let visibleCount = 0;
-
     groups().forEach((group) => {
       let groupCount = 0;
       const groupExpansion = expansionKeyForFilter(group.dataset.groupName);
@@ -121,7 +121,6 @@
       });
       group.hidden = groupCount === 0;
     });
-
     if (resultCount) resultCount.textContent = `${visibleCount} ${visibleCount === 1 ? 'quest' : 'quests'} gevonden`;
     if (noResults) noResults.hidden = visibleCount > 0;
   }
@@ -161,22 +160,6 @@
     window.setTimeout(() => next.row.classList.remove('resume-highlight'), 2400);
   }
 
-  function initializeNote() {
-    if (!noteField) return;
-    noteField.value = safeRead(NOTE_STORAGE_KEY) || '';
-    document.getElementById('saveNote')?.addEventListener('click', () => {
-      const saved = safeWrite(NOTE_STORAGE_KEY, noteField.value);
-      if (noteMessage) noteMessage.textContent = saved ? 'Notitie opgeslagen.' : 'Opslaan is niet gelukt in deze browser.';
-    });
-    document.getElementById('clearNote')?.addEventListener('click', () => {
-      let cleared = false;
-      try { localStorage.removeItem(NOTE_STORAGE_KEY); cleared = true; }
-      catch (error) { console.warn('Could not clear the session note:', error); }
-      if (cleared) noteField.value = '';
-      if (noteMessage) noteMessage.textContent = cleared ? 'Notitie gewist.' : 'Wissen is niet gelukt in deze browser.';
-    });
-  }
-
   function initializeWhenStable() {
     if (initialized) return;
     window.clearTimeout(settleTimer);
@@ -208,7 +191,6 @@
     }
   });
 
-  initializeNote();
   const renderObserver = new MutationObserver(() => {
     if (!initialized) initializeWhenStable();
     else {
