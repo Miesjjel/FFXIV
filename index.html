@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="app-version" content="v1.1.0" />
-  <title>FFXIV Story & Trailer Tracker</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="readability.css" />
+  <meta name="app-version" content="v1.2.0" />
+  <title>FFXIV Story &amp; Trailer Tracker</title>
+  <link rel="stylesheet" href="styles.css?v=1.2.0" />
+  <link rel="stylesheet" href="readability.css?v=1.2.0" />
 </head>
 <body>
   <div class="top-progress">
     <div class="progress-wrap" aria-label="Story completion progress">
-      <div class="progress-bar" aria-hidden="true">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
+      <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
     </div>
   </div>
 
@@ -21,44 +19,77 @@
     <header class="topbar">
       <div class="header-row">
         <div class="title-block">
-          <div class="version-badge" id="appVersion">v1.1.0</div>
+          <div class="version-badge" id="appVersion">v1.2.0</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
-        <div class="stat-pill">
-          <strong id="completionText">0 / 64 Complete</strong>
-          <small>Story progress</small>
-        </div>
+        <div class="stat-pill"><strong id="completionText">0 / 64 Complete</strong><small>Story progress</small></div>
       </div>
-
       <div class="next-step" id="nextStep">Next recommended step: A Realm Reborn</div>
     </header>
 
     <main>
+      <section class="session-tools" aria-label="Session tools">
+        <section class="tool-card resume-card" aria-labelledby="resumeHeading">
+          <div>
+            <h2 id="resumeHeading">Hervatten</h2>
+            <p id="resumeQuest" class="resume-quest" aria-live="polite">Volgende quest wordt geladen…</p>
+            <p id="resumeGroup" class="resume-group"></p>
+          </div>
+          <button id="resumeButton" class="tool-button primary-button" type="button">Ga verder</button>
+        </section>
+
+        <section class="tool-card note-card" aria-labelledby="noteHeading">
+          <h2 id="noteHeading">Sessienotitie</h2>
+          <label class="visually-hidden" for="sessionNote">Persoonlijke sessienotitie</label>
+          <textarea id="sessionNote" rows="3" maxlength="1000" placeholder="Waar ben ik gebleven? Wat wil ik de volgende keer doen?"></textarea>
+          <div class="note-actions">
+            <button id="saveNote" class="tool-button primary-button" type="button">Notitie opslaan</button>
+            <button id="clearNote" class="tool-button" type="button">Wissen</button>
+            <span id="noteMessage" class="tool-message" aria-live="polite"></span>
+          </div>
+        </section>
+      </section>
+
       <section id="expandedView" class="view-panel">
         <div class="story-group">
           <div class="group-header">
             <h2>Expanded: Complete MSQ Questbook</h2>
             <div class="group-meta">Chronological MSQ titles and patch chapters</div>
           </div>
-
+          <div class="quest-tools" role="search" aria-label="Questoverzicht zoeken en filteren">
+            <div class="field-group search-field">
+              <label for="questSearch">Zoek op questnaam</label>
+              <input id="questSearch" type="search" autocomplete="off" placeholder="Bijvoorbeeld: Shadow…" />
+            </div>
+            <div class="field-group">
+              <label for="progressFilter">Voortgang</label>
+              <select id="progressFilter">
+                <option value="all">Alle quests</option>
+                <option value="completed">Voltooide quests</option>
+                <option value="open">Openstaande quests</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="expansionFilter">Uitbreiding</label>
+              <select id="expansionFilter"><option value="all">Alle uitbreidingen</option></select>
+            </div>
+            <button id="resetQuestFilters" class="tool-button reset-button" type="button">Filters wissen</button>
+            <p id="resultCount" class="result-count" aria-live="polite"></p>
+          </div>
+          <p id="noQuestResults" class="empty-results" role="status" hidden>Geen quests gevonden met deze zoekopdracht en filters.</p>
           <ul id="expandedQuestBook" class="expanded-list"></ul>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="script.js?v=1.1.0"></script>
+  <script src="script.js?v=1.2.0"></script>
+  <script src="enhancements.js?v=1.2.0" defer></script>
   <script>
-    // Keep the release badge current until the app's own version history is updated.
     const versionBadge = document.getElementById('appVersion');
     const currentVersion = document.querySelector('meta[name="app-version"]').content;
-    if (versionBadge) {
-      versionBadge.textContent = currentVersion;
-      new MutationObserver(() => {
-        if (versionBadge.textContent !== currentVersion) versionBadge.textContent = currentVersion;
-      }).observe(versionBadge, { childList: true, characterData: true, subtree: true });
-    }
+    if (versionBadge) versionBadge.textContent = currentVersion;
   </script>
 </body>
 </html>
