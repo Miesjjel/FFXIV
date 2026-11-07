@@ -7,6 +7,7 @@
  *            centralize group-state persistence to avoid startup races.
  *   v1.2.2 - Removed the session-note interface and storage.
  *   v1.2.3 - Maintenance release; retain existing behavior and storage compatibility.
+ *   v1.2.4 - Cache rendered quest rows and batch DOM updates.
  *
  * Compatibility: legacy checkbox state remains in ffxiv-story-tracker-v2.
  * Group state stays in ffxiv-story-tracker-groups-v1.
@@ -33,6 +34,9 @@
   const resumeButton = document.getElementById('resumeButton');
   let initialized = false;
   let settleTimer = 0;
+  let renderFrame = 0;
+  let renderedGroups = [];
+  let renderedRows = [];
 
   function safeRead(key) {
     try { return localStorage.getItem(key); }
@@ -77,12 +81,34 @@
   }
 
   function questRows() {
-    return Array.from(list.querySelectorAll('.expanded-row')).map((row) => ({
-      row,
-      checkbox: row.querySelector('.expanded-check'),
-      group: row.closest('.expanded-group'),
-      title: row.querySelector('.task-text')?.textContent.trim() || ''
-    })).filter((item) => item.checkbox && item.group);
+    return renderedRows;
+  }
+
+  function refreshRenderedRows() {
+    renderedGroups = groups().map((group) => ({
+      element: group,
+      expansion: expansionKey(group.dataset.groupName),
+      rows: []
+    }));
+    renderedRows = [];
+
+    renderedGroups.forEach((group) => {
+      group.rows = Array.from(group.element.querySelectorAll('.expanded-row')).map((row) => {
+        const checkbox = row.querySelector('.expanded-check');
+        if (!checkbox) return null;
+
+        const title = row.querySelector('.task-text')?.textContent.trim() || '';
+        const item = {
+          row,
+          checkbox,
+          group: group.element,
+          title,
+          normalizedTitle: title.toLocaleLowerCase()
+        };
+        renderedRows.push(item);
+        return item;
+      }).filter(Boolean);
+    });
   }
 
   function populateExpansionFilter() {
@@ -102,19 +128,16 @@
     const status = progressFilter?.value || 'all';
     const expansion = expansionFilter?.value || 'all';
     let visibleCount = 0;
-    groups().forEach((group) => {
+    renderedGroups.forEach((groupData) => {
       let groupCount = 0;
-      const groupExpansion = expansionKey(group.dataset.groupName);
-      group.querySelectorAll('.expanded-row').forEach((row) => {
-        const check = row.querySelector('.expanded-check');
-        const title = row.querySelector('.task-text')?.textContent.trim() || '';
-        const visible = title.toLocaleLowerCase().includes(query)
-          && (status === 'all' || (status === 'completed' ? Boolean(check?.checked) : !check?.checked))
-          && (expansion === 'all' || expansion === groupExpansion);
-        row.hidden = !visible;
+      groupData.rows.forEach((item) => {
+        const visible = item.normalizedTitle.includes(query)
+          && (status === 'all' || (status === 'completed' ? item.checkbox.checked : !item.checkbox.checked))
+          && (expansion === 'all' || expansion === groupData.expansion);
+        item.row.hidden = !visible;
         if (visible) { groupCount += 1; visibleCount += 1; }
       });
-      group.hidden = groupCount === 0;
+      groupData.element.hidden = groupCount === 0;
     });
     if (resultCount) resultCount.textContent = `${visibleCount} ${visibleCount === 1 ? 'quest' : 'quests'} gevonden`;
     if (noResults) noResults.hidden = visibleCount > 0;
@@ -162,6 +185,7 @@
       const renderedGroups = groups();
       if (!renderedGroups.length || !renderedGroups.every((group) => group.querySelector('.expanded-check'))) return;
       initialized = true;
+      refreshRenderedRows();
       restoreGroupState(renderedGroups);
       populateExpansionFilter();
       applyQuestFilters();
@@ -188,10 +212,14 @@
 
   const renderObserver = new MutationObserver(() => {
     if (!initialized) initializeWhenStable();
-    else {
-      populateExpansionFilter();
-      updateResume();
-      applyQuestFilters();
+    else if (!renderFrame) {
+      renderFrame = window.requestAnimationFrame(() => {
+        renderFrame = 0;
+        refreshRenderedRows();
+        populateExpansionFilter();
+        updateResume();
+        applyQuestFilters();
+      });
     }
   });
   renderObserver.observe(list, { childList: true, subtree: true });
