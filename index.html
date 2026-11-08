@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="app-version" content="v1.2.4" />
+  <meta name="app-version" content="v1.2.5" />
   <title>FFXIV Story &amp; Trailer Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=1.2.4" />
-  <link rel="stylesheet" href="readability.css?v=1.2.4" />
-  <link rel="stylesheet" href="tracker-v1.2.css?v=1.2.4" />
-  <link rel="stylesheet" href="tracker-v1.2.3.css?v=1.2.4" />
+  <link rel="stylesheet" href="styles.css?v=1.2.5" />
+  <link rel="stylesheet" href="readability.css?v=1.2.5" />
+  <link rel="stylesheet" href="tracker-v1.2.css?v=1.2.5" />
+  <link rel="stylesheet" href="tracker-v1.2.3.css?v=1.2.5" />
 </head>
 <body>
   <div class="top-progress">
@@ -21,7 +21,7 @@
     <header class="topbar">
       <div class="header-row">
         <div class="title-block">
-          <div class="version-badge" id="appVersion">v1.2.4</div>
+          <div class="version-badge" id="appVersion">v1.2.5</div>
           <p class="eyebrow">Final Fantasy XIV</p>
           <h1>Chronological Story &amp; Trailer Tracker</h1>
         </div>
@@ -71,19 +71,8 @@
     </main>
   </div>
 
-  <!-- v1.2.4: Cache-busted local assets. Historical tracker loader is retained until a tested standalone port exists. -->
-  <script src="script.js?v=1.2.4"></script>
-  <script src="enhancements.js?v=1.2.4" defer></script>
-  <script>
-    // Keep the release badge consistent with the HTML version after legacy startup.
-    const versionBadge = document.getElementById('appVersion');
-    const currentVersion = document.querySelector('meta[name="app-version"]').content;
-    if (versionBadge) {
-      versionBadge.textContent = currentVersion;
-      new MutationObserver(() => {
-        if (versionBadge.textContent !== currentVersion) versionBadge.textContent = currentVersion;
-      }).observe(versionBadge, { childList: true, characterData: true, subtree: true });
-    }
-  </script>
+  <!-- v1.2.5: The tracker core and enhancements both load from local files. -->
+  <script src="script.js?v=1.2.5"></script>
+  <script src="enhancements.js?v=1.2.5" defer></script>
 </body>
 </html>

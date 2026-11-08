@@ -8,6 +8,7 @@
  *   v1.2.2 - Removed the session-note interface and storage.
  *   v1.2.3 - Maintenance release; retain existing behavior and storage compatibility.
  *   v1.2.4 - Cache rendered quest rows and batch DOM updates.
+ *   v1.2.5 - Load the tracker core locally without a GitHub request.
  *
  * Compatibility: legacy checkbox state remains in ffxiv-story-tracker-v2.
  * Group state stays in ffxiv-story-tracker-groups-v1.
